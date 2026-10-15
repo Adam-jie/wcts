@@ -1,0 +1,134 @@
+[
+  {
+    "name": "acceptance: CSV file preserves styled-looking data literally",
+    "args": ["--width", "160", "--csv", "literal.csv"],
+    "files": {"literal.csv": "name,value\n[red]literal[/red],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[red]literal[/red]"],
+    "stdout_not_contains": ["failed to print resource"]
+  },
+  {
+    "name": "acceptance: stdin preserves an unmatched closing tag",
+    "args": ["--width", "160", "--csv", "-"],
+    "stdin": "name,value\n[/bold],2\n",
+    "files": {},
+    "expected_exit": 0,
+    "stdout_contains": ["[/bold]"],
+    "stdout_not_contains": ["failed to print resource"]
+  },
+  {
+    "name": "acceptance: unknown bracketed text remains visible",
+    "args": ["--width", "160", "--csv", "unknown.csv"],
+    "files": {"unknown.csv": "name,value\n[not-a-style],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[not-a-style]"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "acceptance: CSV headers remain literal",
+    "args": ["--width", "160", "--csv", "header.csv"],
+    "files": {"header.csv": "[bold]header[/bold],value\nalpha,2\nbeta,3\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[bold]header[/bold]", "alpha"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "acceptance: Chinese bracketed data remains literal",
+    "args": ["--width", "160", "--csv", "chinese.csv"],
+    "files": {"chinese.csv": "name,value\n[bold]中文[/bold],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[bold]中文[/bold]"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "acceptance: brackets in a URL remain visible",
+    "args": ["--width", "160", "--csv", "url.csv"],
+    "files": {"url.csv": "name,value\nhttps://example.test/a[0]?q=[red],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["https://example.test/a[0]?q=[red]"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "acceptance: TSV headers and cells remain literal",
+    "args": ["--width", "160", "literal.tsv"],
+    "files": {"literal.tsv": "[bold]header[/bold]\tvalue\n[red]tab[/red]\t2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[bold]header[/bold]", "[red]tab[/red]"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "acceptance: head selection keeps literal first row",
+    "args": ["--width", "160", "--csv", "--head", "1", "head.csv"],
+    "files": {"head.csv": "name,value\n[red]first[/red],1\n[blue]second[/blue],2\n[bold]third[/bold],3\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[red]first[/red]"],
+    "stdout_not_contains": ["second", "third"]
+  },
+  {
+    "name": "acceptance: HTML export keeps bracketed data",
+    "args": ["--width", "160", "--csv", "--export-html", "literal.html", "export.csv"],
+    "files": {"export.csv": "name,value\n[red]export-literal[/red],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[red]export-literal[/red]"],
+    "stdout_not_contains": [],
+    "export": {"path": "literal.html", "contains": ["[red]export-literal[/red]"], "not_contains": []}
+  },
+  {
+    "name": "acceptance: SVG export keeps bracketed data",
+    "args": ["--width", "160", "--csv", "--export-svg", "literal.svg", "export.csv"],
+    "files": {"export.csv": "name,value\n[bold]svg-literal[/bold],2\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["[bold]svg-literal[/bold]"],
+    "stdout_not_contains": [],
+    "export": {"path": "literal.svg", "contains": ["[bold]svg-literal[/bold]"], "not_contains": []}
+  },
+  {
+    "name": "frozen regression: explicit print mode interprets markup",
+    "args": ["--width", "160", "--print", "[bold]intentional[/bold]"],
+    "files": {},
+    "expected_exit": 0,
+    "stdout_contains": ["intentional"],
+    "stdout_not_contains": ["[bold]", "[/bold]"]
+  },
+  {
+    "name": "frozen regression: JSON stdin still renders",
+    "args": ["--width", "160", "--json", "-"],
+    "stdin": "{\"ready\": true, \"count\": 2}",
+    "files": {},
+    "expected_exit": 0,
+    "stdout_contains": ["\"ready\"", "true", "\"count\""],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "frozen regression: Markdown file still renders",
+    "args": ["--width", "160", "report.md"],
+    "files": {"report.md": "# Report\n\n**Key result**\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["Report", "Key result"],
+    "stdout_not_contains": ["**Key result**"]
+  },
+  {
+    "name": "frozen regression: quoted CSV and decimal spelling survive",
+    "args": ["--width", "160", "ordinary.csv"],
+    "files": {"ordinary.csv": "name,value\n\"Smith, Jane\",-12.50\n\"Jones, Sam\",0.125\n"},
+    "expected_exit": 0,
+    "stdout_contains": ["Smith, Jane", "Jones, Sam", "-12.50", "0.125"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "frozen regression: installed CLI help remains available",
+    "args": ["--width", "160", "--help"],
+    "files": {},
+    "expected_exit": 0,
+    "stdout_contains": ["--csv", "--print", "--export-svg"],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "frozen regression: unknown option remains usage error",
+    "args": ["--width", "160", "--testfix-invalid-option"],
+    "files": {},
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": []
+  }
+]

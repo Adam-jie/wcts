@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "retrieved_at": "2026-10-15",
+  "purpose": "记录 TestFix Skills 的一手来源、借鉴内容与适用边界；不安装或执行第三方 Skill，不复制长提示词。",
+  "sources": [
+    {
+      "id": "roboagent-paper",
+      "kind": "研究论文",
+      "title": "RoboAgent: Chaining Basic Capabilities for Embodied Task Planning",
+      "version": "arXiv:2604.07774v1",
+      "url": "https://arxiv.org/html/2604.07774v1",
+      "retrieved_at": "2026-10-15",
+      "license": "论文页面声明 arXiv.org perpetual non-exclusive license；不将其视为开源代码许可证。",
+      "evidence": [
+        {
+          "section": "3.2 Capability-Driven Planning",
+          "url": "https://arxiv.org/html/2604.07774v1#S3.SS2",
+          "claim": "单一 VLM 实现 Scheduler 与 EG、OG、SD、AD、ES 五项能力；AD 输出动作，其余能力输出文本反馈，query 与反馈进入调度上下文。"
+        },
+        {
+          "section": "6 Details of the Scheduler and Capabilities",
+          "url": "https://arxiv.org/html/2604.07774v1#S6",
+          "claim": "EG 使用同一 query 的探索历史并在 query 改变时清空；OG 输出 JSON 风格标注；SD 描述目标对象状态；AD 分探索和操作模式且动作空间依赖模拟器；ES 输入实际动作及执行结果；Scheduler 维护历史并分析完成及剩余子计划。"
+        }
+      ],
+      "reuse": "借鉴逐功能接口、局部上下文、query 范围失败历史、动作与反馈分离，以及依据实际执行结果更新进度的思路。",
+      "enforcement": "此处引用论文的接口和提示词设计，未审计其仓库执行逻辑；不据此声称工程约束已由程序强制。",
+      "limits": [
+        "论文研究具身任务规划，五项能力由单一 VLM 实现，不能据此称其为多个独立软件工程 Agent。",
+        "论文不是通用 Agent Skills 安全规范，也不是 TestFix 工程 ILP 的来源。",
+        "TestFix 不复现其行为克隆、DAgger 或强化微调训练。"
+      ]
+    },
+    {
+      "id": "agent-skills",
+      "kind": "官方开放规范与参考实现",
+      "repository": "https://github.com/agentskills/agentskills",
+      "commit": "69ef37e9424c0a7ea9dd2293b559e43ec8176379",
+      "retrieved_at": "2026-10-15",
+      "licenses": {
+        "code": "Apache-2.0",
+        "documentation": "CC-BY-4.0",
+        "evidence": [
+          "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/README.md#license",
+          "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/LICENSE",
+          "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/docs/LICENSE"
+        ]
+      },
+      "evidence": [
+        {
+          "url": "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/docs/specification.mdx",
+          "claim": "Skill 目录至少含 SKILL.md，使用 YAML frontmatter 与 Markdown 正文；name、description 必填；可带 references、assets、scripts；metadata 可记录字符串版本；allowed-tools 为实验字段，支持依赖客户端。"
+        },
+        {
+          "url": "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/docs/client-implementation/adding-skills-support.mdx",
+          "claim": "先披露名称和描述，再激活正文，最后按需读取资源；通常由模型判断是否匹配 description；专用激活工具可限制合法名称并由客户端处理权限。"
+        },
+        {
+          "url": "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/skills-ref/src/skills_ref/validator.py",
+          "claim": "参考验证器以程序检查 frontmatter 合法字段、name 与目录一致性、description 及 compatibility 等格式条件；不验证正文职责、业务前后置条件或测试证据。"
+        },
+        {
+          "url": "https://github.com/agentskills/agentskills/blob/69ef37e9424c0a7ea9dd2293b559e43ec8176379/skills-ref/README.md",
+          "claim": "skills-ref 自述为演示用途，不是生产组件。"
+        }
+      ],
+      "reuse": "采用 SKILL.md 的发现和激活格式，以及 references/assets 分担详细契约与模板的组织方式。",
+      "enforcement": "规范定义可移植文件格式；参考验证器实现部分格式检查。正文约束本身是文档或提示词，allowed-tools 本身不构成跨客户端通用权限隔离。",
+      "limits": "规范没有强制的工程输入输出、前后置、独立验收或内容哈希 schema；这些内容属于 TestFix 扩展。"
+    },
+    {
+      "id": "mini-swe-agent",
+      "kind": "开源软件工程代理实现",
+      "repository": "https://github.com/SWE-agent/mini-swe-agent",
+      "commit": "04d809ceab9df28f9adaed044884180159172930",
+      "version": "2.4.6",
+      "retrieved_at": "2026-10-15",
+      "license": "MIT",
+      "license_url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/LICENSE.md",
+      "evidence": [
+        {
+          "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/__init__.py",
+          "claim": "记录版本 2.4.6，并定义 Agent、Model、Environment 接口。"
+        },
+        {
+          "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/config/mini.yaml",
+          "claim": "复现、修复、复测、边界测试是提示词中的推荐工作流，不是程序完成门槛。"
+        },
+        {
+          "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/actions_toolcall.py",
+          "claim": "程序拒绝无工具调用、未知工具名、JSON 参数解析失败或缺 command，并形成格式错误反馈；只提供 bash 接口不能限制 shell 命令内容或写入路径。"
+        },
+        {
+          "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/environments/local.py",
+          "claim": "环境返回 output、returncode、exception_info；提交检查仅要求首行完成标记且 returncode 为零，不能证明测试通过。"
+        },
+        {
+          "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/agents/default.py",
+          "claim": "程序处理格式失败，执行可配置步数、费用、时长限制；轨迹含配置、mini_version、messages、exit_status、submission 和 trajectory_format。"
+        }
+      ],
+      "reuse": "借鉴结构化执行反馈、明确退出状态、有限重试与带版本配置的轨迹记录。",
+      "enforcement": "动作解析、运行限制、执行结果和轨迹序列化由源码实现；推荐工程流程仅为提示词，提交信号不等于修复验收。",
+      "limits": "本地 shell 环境未提供 TestFix 六角色的写入范围隔离或独立验收；不复用其任意 shell 执行方式作为 Skill 权限控制。"
+    }
+  ],
+  "testfix_extensions": {
+    "attribution": "以下为 TestFix 项目新增设计，不归因于上述论文或开源实现。",
+    "items": [
+      "requirements、tester、diagnosis、developer、reviewer、verification 六角色的工程职责与交接。",
+      "逐 Skill 的触发条件、结构化输入输出、前置条件、后置条件、失败反馈和验证依据。",
+      "由工程运行层实施的工具与文件写入权限、契约版本及内容哈希检查。",
+      "验收依据固定、证据关联候选代码版本，最终通过须由独立 verification 依据实际检查结果判断。"
+    ],
+    "enforcement_boundary": "写在 SKILL.md 中的是行为约束；只有对应运行层检查实际实现并执行后，才能称为程序强制。"
+  }
+}

@@ -1,0 +1,2 @@
+# Source/evaluation seals hash exact bytes. Preserve them on every checkout.
+* -text

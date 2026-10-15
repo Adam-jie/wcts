@@ -1,0 +1,13 @@
+{
+  "id": "Repo/order-discount",
+  "title": "订单模块 · 补齐折扣与参数校验",
+  "source_file": "order.py",
+  "acceptance_file": "acceptance.py",
+  "entry_point": "discounted_total",
+  "requirements": "Keep existing subtotal(prices) behavior and code unchanged. Complete discounted_total(prices, rate): return subtotal(prices) * (1 - rate), allowing rate from 0 to 1 inclusive. Invalid rates (<0 or >1) must raise ValueError. Empty prices returns 0.0 for a valid rate. Preserve both public function signatures.",
+  "regression_cases": [
+    {"args": [[5.0, 8.0], 0.0], "expected": 13.0},
+    {"args": [[], 0.0], "expected": 0.0}
+  ]
+}
+

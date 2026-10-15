@@ -1,0 +1,28 @@
+{
+  "requirements": [
+    {
+      "id": "R1",
+      "description": "In CSV/TSV table mode, header and cell values are literal data. Preserve bracketed strings exactly, including valid-looking style tags, unknown tags, unmatched closing tags, URL brackets, Unicode and punctuation; valid delimited input must not fail merely because its data looks like Rich markup."
+    },
+    {
+      "id": "R2",
+      "description": "Apply the same literal-data behavior to explicit --csv mode and extension auto-detected .csv/.tsv files, stdin resource -, delimiter variants, duplicate headers, and the existing --head/--tail options. Do not change column selection, ordering, or CSV parsing semantics."
+    },
+    {
+      "id": "R3",
+      "description": "HTML and SVG exports of CSV tables must retain the same visible literal headers and cells as console rendering. Compare decoded visible text, allowing presentation whitespace normalization but never dropping bracket tokens or altering their text."
+    },
+    {
+      "id": "R4",
+      "description": "Preserve existing ordinary CSV, JSON, Markdown, help/version/argument handling, and especially intentional --print/-p markup behavior. All unmodified upstream tests and pre-frozen existing-behavior regression must pass. The package must build as a wheel and run its real rich_cli CLI entrypoint from that wheel."
+    }
+  ],
+  "clarifications": [
+    "This is a real upstream issue reproduction at a pinned, unmodified GitHub commit, not an artificially injected defect. Public symptom: name,value followed by [red]literal[/red],2 loses bracket text; name,value followed by [/bold],2 exits with an error. Expected: exit 0 and literal data visible in table mode. No upstream fix or issue Cause section is supplied.",
+    "The upstream repository has one original pytest case. Additional behavior regression and independent evaluation were authored and frozen separately before model generation; their counts are reported separately from the original upstream suite.",
+    "This is the rich-cli command-line application, not Flask. Runtime source root is src, package rich_cli, entry python -m rich_cli. Use --width 160 for deterministic assertions. Tests may use Click CliRunner; the host additionally validates real subprocesses against a built wheel. Preserve intentional --print markup. All reported model identity/usage must follow actual transport metadata."
+  ],
+  "allowed_changes": [
+    "src/rich_cli/__main__.py"
+  ]
+}

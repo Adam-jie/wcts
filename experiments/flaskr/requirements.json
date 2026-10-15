@@ -1,0 +1,19 @@
+{
+  "project": "Flaskr full web application",
+  "source": "https://github.com/pallets/flask/tree/2c1b30d0503cfb064f1cb252e6614a06915a362a/examples/tutorial",
+  "requirements_source": "https://flask.palletsprojects.com/en/stable/tutorial/next/",
+  "scope": "Implement three official further-development ideas in an unchanged upstream application. These are missing features, not injected bugs or an upstream bug report.",
+  "requirements": [
+    {"id": "R1", "description": "Add a public GET /<int:id> article detail page showing title, body, author and date. Index article titles must link to their detail pages. A missing article returns 404. Logged-out readers may read articles; only the author retains edit/delete rights."},
+    {"id": "R2", "description": "Add a GET search form with query parameter q on the index. Trim outer whitespace and filter article titles by case-insensitive literal substring (ASCII case folding is sufficient); do not search bodies. Empty q shows all articles. %, _ and backslash are literal characters, and SQL-looking text remains ordinary data. Render the query with normal HTML escaping."},
+    {"id": "R3", "description": "Show at most five articles per page, newest created first, breaking date ties by descending id. Use page=1 by default, and previous/next links when appropriate. Keep q in pagination links. Page must be an ASCII positive decimal integer; malformed, zero or negative values return 400, and a page beyond the filtered result's last page returns 404. An empty result on page 1 returns 200 with a useful empty-state message, no articles and no pagination links."},
+    {"id": "R4", "description": "Keep the complete original registration/login/logout/create/update/delete/database/app-factory test suite and its assertions unchanged. Build and start the application locally; verify new features and original CRUD through real HTTP with SQLite persistence and verify templates escape HTML."}
+  ],
+  "clarifications": [
+    "The upstream page proposes detail, search and five-item pagination; routes, literal-search semantics, deterministic sorting and status codes here are explicit experiment acceptance decisions.",
+    "No tag/comment/password-reset/image feature is included in this task.",
+    "No live OpenAI API or AgentArts deployment is claimed. GPT-5.6 Sol agents in the current Codex session design tests and edit the full repository copy."
+  ],
+  "allowed_changes": ["flaskr/blog.py", "flaskr/templates/blog/index.html", "flaskr/templates/blog/detail.html", "flaskr/static/style.css"],
+  "protected": ["baseline/**", "candidate/tests/**", "candidate/flaskr/auth.py", "candidate/flaskr/db.py", "candidate/flaskr/schema.sql", "candidate/flaskr/__init__.py", "candidate/pyproject.toml", "acceptance_tests/**", "generated_tests/**"]
+}

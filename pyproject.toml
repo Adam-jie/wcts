@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "testfix-agent"
+version = "0.2.0"
+description = "Evidence-driven multi-agent feature completion and independent verification"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.34,<1",
+    "httpx>=0.28,<1",
+    "python-dotenv>=1.0,<2",
+    "ortools>=9.14,<10",
+    "pyyaml>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9"]
+
+[project.scripts]
+testfix = "testfix.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["testfix*"]
+
+[tool.setuptools.package-data]
+testfix = ["skill_library/catalog.json", "skill_library/*/SKILL.md", "skill_library/*/references/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

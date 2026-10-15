@@ -1,0 +1,141 @@
+{
+  "schema_version": "testfix.skill-catalog.v1",
+  "version": "1.2.0",
+  "skills": [
+    {
+      "id": "plan-workflow",
+      "path": "plan-workflow/SKILL.md",
+      "contract": "plan-workflow/references/contract.json"
+    },
+    {
+      "id": "explore-repository",
+      "path": "explore-repository/SKILL.md",
+      "contract": "explore-repository/references/contract.json"
+    },
+    {
+      "id": "ground-code",
+      "path": "ground-code/SKILL.md",
+      "contract": "ground-code/references/contract.json"
+    },
+    {
+      "id": "analyze-requirements",
+      "path": "analyze-requirements/SKILL.md",
+      "contract": "analyze-requirements/references/contract.json"
+    },
+    {
+      "id": "generate-tests",
+      "path": "generate-tests/SKILL.md",
+      "contract": "generate-tests/references/contract.json"
+    },
+    {
+      "id": "diagnose-results",
+      "path": "diagnose-results/SKILL.md",
+      "contract": "diagnose-results/references/contract.json"
+    },
+    {
+      "id": "repair-code",
+      "path": "repair-code/SKILL.md",
+      "contract": "repair-code/references/contract.json"
+    },
+    {
+      "id": "review-patch",
+      "path": "review-patch/SKILL.md",
+      "contract": "review-patch/references/contract.json"
+    },
+    {
+      "id": "verify-delivery",
+      "path": "verify-delivery/SKILL.md",
+      "contract": "verify-delivery/references/contract.json"
+    }
+  ],
+  "roles": {
+    "requirements": "analyze-requirements",
+    "tester": "generate-tests",
+    "diagnosis": "diagnose-results",
+    "developer": "repair-code",
+    "reviewer": "review-patch"
+  },
+  "profiles": {
+    "pure_python": {
+      "required_skills": [
+        "analyze-requirements",
+        "generate-tests",
+        "diagnose-results",
+        "repair-code",
+        "review-patch",
+        "verify-delivery"
+      ],
+      "protected_resources": [
+        "independent_acceptance",
+        "regression_tests",
+        "reference_solution"
+      ],
+      "required_gates": [
+        "generated_tests",
+        "independent_acceptance",
+        "regression_preservation",
+        "candidate_policy",
+        "review"
+      ]
+    },
+    "flaskr_project": {
+      "required_skills": [
+        "plan-workflow",
+        "explore-repository",
+        "ground-code",
+        "analyze-requirements",
+        "generate-tests",
+        "diagnose-results",
+        "repair-code",
+        "review-patch",
+        "verify-delivery"
+      ],
+      "protected_resources": [
+        "independent_acceptance",
+        "regression_tests",
+        "reference_solution"
+      ],
+      "required_gates": [
+        "paired_test_ids",
+        "source_binding",
+        "original_regression",
+        "generated_tests",
+        "independent_acceptance",
+        "protected_hashes",
+        "review_hash",
+        "wheel_build",
+        "real_http",
+        "sqlite_restart"
+      ]
+    },
+    "python_package": {
+      "required_skills": [
+        "plan-workflow",
+        "explore-repository",
+        "ground-code",
+        "analyze-requirements",
+        "generate-tests",
+        "diagnose-results",
+        "repair-code",
+        "review-patch",
+        "verify-delivery"
+      ],
+      "protected_resources": [
+        "independent_acceptance",
+        "regression_tests",
+        "reference_solution"
+      ],
+      "required_gates": [
+        "paired_test_ids",
+        "source_binding",
+        "original_regression",
+        "generated_tests",
+        "independent_acceptance",
+        "protected_hashes",
+        "review_hash",
+        "wheel_build",
+        "real_cli"
+      ]
+    }
+  }
+}

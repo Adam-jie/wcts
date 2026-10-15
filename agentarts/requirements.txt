@@ -1,0 +1,3 @@
+# Official source pinned to the revision inspected in docs/research.md.
+agentarts-sdk @ git+https://github.com/huaweicloud/agentarts-sdk-python.git@26a4cf9a06a1c55cb13700e5b3f47f9f4fb84e07
+
