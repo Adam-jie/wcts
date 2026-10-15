@@ -18,6 +18,7 @@ import {
   statusLabel,
   suiteFraction,
 } from "./lab-core.mjs";
+import { nodeStory, postcheckFailed, presentationProjection, workflowStory } from "./lab-human.mjs";
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -30,9 +31,12 @@ const state = {
   pollTimer: null,
   pollEpoch: 0,
   scene: null,
+  sceneInit: null,
+  sceneEpoch: 0,
   flat: false,
   submitting: false,
   probing: false,
+  story: null,
 };
 const transientStatuses = new Set(["queued", "running"]);
 const probeSamples = {
@@ -172,7 +176,7 @@ function updateStart() {
   $("start-run").disabled =
     state.submitting || active || !project() || !provider()?.configured;
   $("start-run").firstElementChild.textContent = state.submitting
-    ? "正在提交…"
+    ? "正在分配给团队…"
     : active
       ? "已有实验执行中"
       : "启动真实测试";
@@ -325,10 +329,7 @@ function renderDatasets() {
         button.addEventListener("click", () => {
           $("project").value = projectId;
           updateProject();
-          $("setup-title").scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+          window.dispatchEvent(new CustomEvent("lab:setup-requested", { detail: { focus: "requirement" } }));
         });
         foot.append(button);
       } else
@@ -476,7 +477,7 @@ function renderMode() {
   const status = $("run-status");
   status.className = `status-badge ${statusClass(run.status)}`;
   status.textContent = statusLabel(run.status);
-  if (state.projection.postchecks?.status === "failed") {
+  if (postcheckFailed(state.projection.postchecks)) {
     banner.classList.add("postcheck-failed");
     setText(
       "mode-description",
@@ -542,6 +543,11 @@ function renderVerdict() {
     failed = conclusion === "failed";
   const target = $("verdict");
   target.className = `verdict ${accepted ? "success" : failed ? "failed" : "neutral"}`;
+  if (state.projection.legacy_evidence_pending && accepted) {
+    target.className = "verdict neutral";
+    target.textContent = "旧格式记录的部分套件缺少进程退出码，执行结论待核验；下方保留已有用例计数，原报告不改写。";
+    return;
+  }
   if (
     postchecks?.status === "failed" ||
     asArray(postchecks?.checks).some((check) => check.status === "failed")
@@ -628,137 +634,91 @@ function section(title, contents) {
   } else item.append(el("p", "", contents));
   return item;
 }
+function renderMission() {
+  const story = workflowStory(state.projection || {});
+  state.story = story;
+  setText("mission-title", story.title);
+  setText("mission-copy", story.copy);
+  const status = $("mission-status");
+  status.className = `status-badge ${story.tone}`;
+  status.textContent = story.status;
+  const progress = $("mission-progress");
+  progress.style.width = `${(story.completed / story.total) * 100}%`;
+  progress.setAttribute("aria-valuenow", String(story.completed));
+  progress.setAttribute("aria-valuetext", `流程完成 ${story.completed}/${story.total}，这是能力完成数，不是测试正确率`);
+  setText("mission-progress-label", state.projection && state.projection.run?.kind !== "autonomous_project" ? "旧格式记录 · 九能力进度不适用" : `流程完成 ${story.completed}/${story.total} · 非测试正确率`);
+  setText("mission-next", story.next);
+  $("mission-next").disabled = !state.projection;
+  $("focus-active").disabled = !state.projection || !normalizeGraph(state.projection.graph).nodes.length;
+  $("journey-steps").replaceChildren(...story.stages.map((stage, index) => {
+    const item = el("li", `journey-step status-${stage.status}`);
+    const button = el("button", "journey-button");
+    button.type = "button";
+    button.disabled = !stage.nodeId;
+    if (stage.status === "running") button.setAttribute("aria-current", "step");
+    button.append(el("span", "journey-number", String(index + 1).padStart(2, "0")), el("span", "journey-name", stage.label), el("small", "journey-state", stage.stateLabel));
+    button.addEventListener("click", () => focusNode(stage.nodeId));
+    item.append(button);
+    return item;
+  }));
+}
+function focusNode(id) {
+  if (!id) return;
+  selectNode(id);
+  state.scene?.focus?.(id);
+  $("scene-title").scrollIntoView({ behavior: "smooth", block: "center" });
+  if (state.flat) {
+    const button = [...$("scene").querySelectorAll(".fallback-node")].find(item => item.dataset.nodeId === id);
+    button?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }
+}
 function renderInspector() {
-  const node = normalizeGraph(state.projection?.graph).nodes.find(
-    (item) => item.id === state.selectedNode,
-  );
+  const node = normalizeGraph(state.projection?.graph).nodes.find(item => item.id === state.selectedNode);
   const target = $("node-body");
   if (!node) {
-    setText("node-title", "选择一个节点");
-    setText("node-kind", "节点详情");
-    empty(target, "点击协作节点，查看真实状态与对应约束。");
+    setText("node-title", "点一位成员，看看他在做什么");
+    setText("node-kind", "团队成员");
+    empty(target, "点击协作图中的角色，查看职责、当前动作和实际回执。");
     return;
   }
-  setText(
-    "node-title",
-    node.kind === "employee" ? node.task_id || node.label : node.label,
-  );
-  setText(
-    "node-kind",
-    node.kind === "employee"
-      ? "员工 Agent"
-      : node.kind === "controller"
-        ? "总控 Agent"
-        : "能力模块",
-  );
-  target.replaceChildren(badge(node.status));
+  const story = nodeStory(node, state.projection), detail = node.detail || {}, contract = detail.current_skill_contract;
+  setText("node-title", story.label);
+  setText("node-kind", node.kind === "employee" ? `员工 Agent${node.round ? ` · 第 ${node.round} 轮` : ""}` : node.kind === "controller" ? "总控 Agent" : "专业能力");
+  target.replaceChildren(badge(node.status), el("p", "node-purpose", story.duty));
+  const current = section("当前在做什么", story.current);
+  current.className = "node-story";
+  target.append(current);
+  if (node.kind === "employee" && asArray(node.paths).length) target.append(section("本次负责的文件", node.paths));
+  const receipt = section("最近的实际回执", el("p", "node-receipt", story.receipt));
+  receipt.className = "node-story";
+  target.append(receipt);
+  if (story.error) {
+    target.append(el("p", "node-error", `${story.errorRecovered ? "曾有步骤未通过，随后已有成功回执：" : `已记录 ${story.errorCount} 次步骤未通过；最近一次：`}${story.error}`));
+  }
+  if (story.dependencies.length) target.append(section("协作关系", `前置环节：${story.dependencies.join("、")}。这里只显示任务依赖；总控也会检查预算和文件写入约束。`));
+  const technical = el("details", "node-technical");
+  technical.append(el("summary", "", "展开 Skill 约束与技术回执"));
+  technical.append(section("记录中的任务", detail.title || node.task_id || node.label || node.id));
+  technical.append(section("节点编号与职责 ID", `${node.id} · ${node.role || "未记录"}`));
+  if (state.projection.run?.error) technical.append(section("宿主原始错误", code(state.projection.run.error)));
   const stats = el("div", "node-detail-grid");
-  for (const [label, value] of [
-    ["入度", node.in_degree],
-    ["出度", node.out_degree],
-  ]) {
+  for (const [label, value] of [["前置依赖数（入度）", node.in_degree], ["后续依赖数（出度）", node.out_degree]]) {
     const cell = el("div");
     cell.append(el("span", "", label), el("strong", "", value));
     stats.append(cell);
   }
-  target.append(stats);
-  const detail = node.detail || {};
-  const contract = detail.current_skill_contract;
-  if (node.kind === "employee" && detail.title)
-    target.append(section("本次任务", detail.title));
-  if (node.role || detail.role)
-    target.append(section("职责", contract?.role || node.role || detail.role));
+  technical.append(stats);
   if (contract) {
-    target.append(
-      section(
-        "当前 Skill 合同",
-        `${contract.id || node.role} · v${contract.version || "未记录"}`,
-      ),
-    );
-    if (contract.reads?.length)
-      target.append(section("合同允许读取", contract.reads));
-    if (contract.writes?.length)
-      target.append(section("合同允许写入", contract.writes));
-    if (contract.budgets)
-      target.append(section("合同执行预算", code(contract.budgets)));
-    target.append(
-      section(
-        "合同版本说明",
-        "这里展示当前安装的合同；历史约束应以该次调用与步骤回执为准。",
-      ),
-    );
+    technical.append(section("当前安装的 Skill 合同", `${contract.id || node.role} · v${contract.version || "未记录"}`));
+    if (contract.reads?.length) technical.append(section("合同允许读取", contract.reads));
+    if (contract.writes?.length) technical.append(section("合同允许写入", contract.writes));
+    if (contract.budgets) technical.append(section("合同执行预算", code(contract.budgets)));
+    technical.append(section("完整合同字段", code(contract)));
+    technical.append(section("合同版本说明", "这里展示当前安装的合同；历史约束应以该次调用与步骤回执为准。"));
   }
-  if (node.depends_on?.length)
-    target.append(section("等待前置任务", node.depends_on));
-  const skills =
-    detail.skills || detail.skill_ids || detail.skill_id || detail.skill;
-  if (skills)
-    target.append(
-      section(
-        "Skill 约束",
-        Array.isArray(skills)
-          ? skills.map((value) =>
-              typeof value === "string" ? value : display(value),
-            )
-          : skills,
-      ),
-    );
-  const tools = detail.tools || detail.allowed_tools;
-  if (tools)
-    target.append(
-      section(
-        "可调用工具",
-        Array.isArray(tools)
-          ? tools.map((value) =>
-              typeof value === "string" ? value : display(value),
-            )
-          : tools,
-      ),
-    );
-  if (detail.constraints)
-    target.append(
-      section(
-        "执行边界",
-        Array.isArray(detail.constraints)
-          ? detail.constraints
-          : display(detail.constraints),
-      ),
-    );
-  if (detail.summary || detail.result || detail.output)
-    target.append(
-      section(
-        "实际结果",
-        typeof (detail.summary || detail.result || detail.output) === "string"
-          ? detail.summary || detail.result || detail.output
-          : code(detail.summary || detail.result || detail.output),
-      ),
-    );
-  const remaining = Object.fromEntries(
-    Object.entries(detail).filter(
-      ([key]) =>
-        ![
-          "role",
-          "skills",
-          "skill_ids",
-          "skill_id",
-          "skill",
-          "tools",
-          "allowed_tools",
-          "constraints",
-          "summary",
-          "result",
-          "output",
-          "current_skill_contract",
-          "title",
-        ].includes(key),
-    ),
-  );
-  if (Object.keys(remaining).length)
-    target.append(section("执行详情", code(remaining)));
-  if (!Object.keys(detail).length)
-    target.append(
-      section("记录状态", "本次报告尚未提供更多节点详情；不补写推测结果。"),
-    );
+  const remaining = Object.fromEntries(Object.entries(detail).filter(([key]) => !["current_skill_contract", "title"].includes(key)));
+  if (Object.keys(remaining).length) technical.append(section("原始执行详情", code(remaining)));
+  target.append(technical);
 }
 
 function renderFallback() {
@@ -811,6 +771,7 @@ function renderFallback() {
         `fallback-node status-${statusClass(node.status)}${node.id === state.selectedNode ? " selected" : ""}`,
       );
     button.type = "button";
+    button.dataset.nodeId = node.id;
     button.style.left = `${p.x}%`;
     button.style.top = `${p.y}%`;
     button.append(
@@ -832,35 +793,49 @@ function renderFallback() {
   setText("interaction-hint", "点击节点查看 Skill 与结果 · 可滚动");
 }
 async function ensureScene() {
-  if (state.flat) {
-    renderFallback();
-    return;
-  }
+  if (state.flat) { renderFallback(); return; }
   if (state.scene) {
     state.scene.setGraph(state.projection?.graph || {});
     state.scene.setSelected(state.selectedNode);
     return;
   }
-  try {
-    const module = await import("./scene.js");
-    state.scene = module.createScene($("scene"), selectNode, (mode) => {
-      if (mode === "lost") {
-        state.scene?.destroy();
-        state.scene = null;
-        renderFallback();
-        setText("render-mode", "WebGL 已中断 · CSS 3D 降级");
-      } else setText("render-mode", "WebGL 3D · 本地渲染");
-    });
-    if (state.scene) {
-      state.scene.setGraph(state.projection?.graph || {});
-      state.scene.setSelected(state.selectedNode);
-      setText("interaction-hint", "拖动旋转 · 滚轮缩放 · 点击节点");
-    } else renderFallback();
-  } catch (error) {
-    renderFallback();
-    setText("render-mode", "3D 渲染不可用 · CSS 3D 降级");
+  if (state.sceneInit) return state.sceneInit;
+  const epoch = state.sceneEpoch;
+  const initialization = (async () => {
+    try {
+      const module = await import("./scene.js");
+      // A view switch can happen while the module is being loaded.
+      if (epoch !== state.sceneEpoch || state.flat || state.scene) return;
+      $("scene").replaceChildren();
+      state.scene = module.createScene($("scene"), selectNode, (mode) => {
+        if (mode === "lost") {
+          state.scene?.destroy();
+          state.scene = null;
+          renderFallback();
+          setText("render-mode", "WebGL 已中断 · CSS 3D 降级");
+        } else setText("render-mode", "WebGL 3D · 本地渲染");
+      });
+      if (state.scene) {
+        state.scene.setGraph(state.projection?.graph || {});
+        state.scene.setSelected(state.selectedNode);
+        setText("interaction-hint", "拖动旋转 · 滚轮缩放 · 点击节点");
+      } else renderFallback();
+    } catch {
+      if (epoch !== state.sceneEpoch || state.flat) return;
+      state.scene?.destroy();
+      state.scene = null;
+      renderFallback();
+      setText("render-mode", "3D 渲染不可用 · CSS 3D 降级");
+    }
+  })();
+  state.sceneInit = initialization;
+  try { await initialization; }
+  finally {
+    if (state.sceneInit === initialization) state.sceneInit = null;
+    if (epoch !== state.sceneEpoch && !state.flat && !state.scene) ensureScene();
   }
 }
+
 function renderSource(target) {
   const source = state.projection.source || {},
     row = el("div", "source-binding");
@@ -918,7 +893,7 @@ function renderResults(target) {
         ? badge("passed")
         : suite.after?.successful === false
           ? badge("failed")
-          : el("span", "muted", "未完成判定"),
+          : el("span", "muted", suite.after?.verification_pending ? "旧格式 · 退出码待核验" : "未完成判定"),
     );
     row.append(result);
     body.append(row);
@@ -1198,6 +1173,7 @@ function renderRun() {
       option.textContent = runOption(state.bootstrap.runs[index]).label;
   }
   renderMode();
+  renderMission();
   renderMetrics();
   renderDownloads();
   renderWarnings();
@@ -1238,7 +1214,7 @@ async function loadRun(id, { poll = false } = {}) {
   }
   const epoch = state.pollEpoch;
   try {
-    const projection = await api(`/api/lab/runs/${encodeURIComponent(id)}`);
+    const projection = presentationProjection(await api(`/api/lab/runs/${encodeURIComponent(id)}`));
     if (epoch !== state.pollEpoch || state.runId !== id) return;
     state.projection = projection;
     connection(true, "本地服务已连接");
@@ -1366,6 +1342,7 @@ async function submitRun(event) {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    window.dispatchEvent(new CustomEvent("lab:run-started", { detail: { id: result.id } }));
     state.startedHere = result.id;
     await loadBootstrap();
     await loadRun(result.id);
@@ -1378,6 +1355,18 @@ async function submitRun(event) {
   }
 }
 
+$("focus-active").addEventListener("click", () => {
+  const id = state.story?.focusId || state.selectedNode;
+  focusNode(id);
+});
+$("mission-next").addEventListener("click", () => {
+  const story = state.story;
+  if (!story) return;
+  if (story.nextFocus) { focusNode(story.nextFocus); return; }
+  state.tab = story.nextTab || "results";
+  renderEvidence();
+  $(story.nextTarget || "evidence").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 $("run-form").addEventListener("submit", submitRun);
 $("project").addEventListener("change", () => updateProject(true));
 $("provider").addEventListener("change", updateProvider);
@@ -1391,6 +1380,7 @@ $("reset-view").addEventListener("click", () => {
   if (state.flat) renderFallback();
 });
 $("toggle-view").addEventListener("click", () => {
+  state.sceneEpoch++;
   state.flat = !state.flat;
   $("graph-shell").classList.toggle("flat-view", state.flat);
   $("toggle-view").textContent = state.flat ? "切换 3D" : "切换平面";
@@ -1427,7 +1417,10 @@ $("probe-mode").addEventListener("change", () => {
 });
 $("probe-input").addEventListener("input", resetProbe);
 window.addEventListener("beforeunload", () => {
+  state.sceneEpoch++;
+  state.flat = true;
   clearTimeout(state.pollTimer);
   state.scene?.destroy();
 });
+renderMission();
 loadBootstrap({ initial: true });

@@ -6,16 +6,17 @@
     <meta name="theme-color" content="#0b1418" />
     <title>TestFix Lab · 多智能体实证实验室</title>
     <link rel="stylesheet" href="/static/lab/lab.css" />
+    <link rel="stylesheet" href="/static/lab/lab-human.css" />
     <script type="module" src="/static/lab/lab.js"></script>
   </head>
   <body>
     <header class="app-header">
       <a class="brand" href="/"
         ><span class="brand-symbol">t<span>f</span></span
-        ><span>TestFix <b>LAB</b><small>多智能体实证实验室</small></span></a
+        ><span>TestFix <b>LAB</b><small>你的智能研发团队</small></span></a
       >
       <nav class="main-nav" aria-label="实验室导航">
-        <a href="#workspace" class="active">运行工作台</a
+        <a href="#collaboration" class="active">协作空间</a
         ><a href="#evidence">验证证据</a><a href="#datasets">实验数据集</a>
       </nav>
       <div class="header-status">
@@ -34,21 +35,28 @@
     <main id="workspace">
       <section class="intro">
         <div>
-          <p class="eyebrow">FROM REQUIREMENT TO VERIFIED PATCH</p>
-          <h1>看见协作，亲手验证<span>。</span></h1>
-          <p>
-            一项真实需求，一条可追溯的执行链。每个状态、补丁和测试结果都来自运行记录。
-          </p>
+          <p class="eyebrow">一项需求，一支配合默契的团队</p>
+          <h1 id="mission-title">让你的研发团队开始协作</h1>
+          <p id="mission-copy">选择一条运行记录，看清谁在做什么，再亲手检查交付结果。</p>
         </div>
-        <a href="/" class="quiet-link">返回完整工作台 ↗</a>
+        <div class="mission-actions">
+          <span id="mission-status" class="status-badge">准备就绪</span>
+          <button id="toggle-setup" class="primary-button" type="button" aria-expanded="false" aria-controls="experiment-setup">＋ 新建实验</button>
+        </div>
       </section>
+      <section class="mission-overview" aria-label="任务进展与建议操作">
+        <div class="mission-progress-group"><span id="mission-progress-label">等待载入任务</span><div class="mission-progress-track"><div id="mission-progress" class="mission-progress-fill" role="progressbar" aria-label="能力流程完成度" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"></div></div></div>
+        <button id="mission-next" class="secondary-button" type="button">查看验证证据 →</button>
+      </section>
+      <ol id="journey-steps" class="journey-steps" aria-label="从需求到交付的五个阶段"></ol>
       <div id="global-error" class="alert error" role="alert" hidden></div>
       <div id="link-notice" class="alert" role="status" hidden></div>
+      <button id="setup-backdrop" class="setup-backdrop" type="button" aria-label="关闭新实验设置" hidden></button>
       <section class="workbench">
-        <aside class="setup panel" aria-labelledby="setup-title">
+        <aside id="experiment-setup" class="setup panel" aria-labelledby="setup-title">
           <div class="panel-heading">
-            <span class="eyebrow">01 / SETUP</span
-            ><span class="subtle-label">真实模型运行</span>
+            <span class="eyebrow">交给团队一个新任务</span
+            ><button id="close-setup" class="icon-button" type="button" aria-label="关闭实验设置">×</button>
           </div>
           <h2 id="setup-title">开始一次新实验</h2>
           <p class="muted small">
@@ -73,7 +81,7 @@
             <p class="field-note requirement-note">
               当前按所选工程的注册需求和验收合同执行；新功能需先注册验收。
             </p>
-            <details class="advanced" open>
+            <details class="advanced">
               <summary>模型与资源预算</summary>
               <label
                 >模型服务<select id="provider" required disabled>
@@ -164,13 +172,15 @@
             </div>
             <span id="run-status" class="status-badge">等待选择</span>
           </div>
-          <section class="scene-panel panel" aria-labelledby="scene-title">
+          <section id="collaboration" class="scene-panel panel" aria-labelledby="scene-title">
             <div class="scene-heading">
               <div>
-                <p class="eyebrow">02 / ORCHESTRATION</p>
-                <h2 id="scene-title">总控与员工协作图</h2>
+                <p class="eyebrow">TEAM SPACE</p>
+                <h2 id="scene-title">走进你的协作空间</h2>
+                <p class="scene-subtitle">点击一位成员，了解职责、当前进展与真实交接。</p>
               </div>
               <div class="scene-actions">
+                <button id="focus-active" class="secondary-button" type="button" title="定位当前工作或选中成员">定位当前工作</button>
                 <button
                   id="reset-view"
                   class="icon-button"
@@ -181,6 +191,7 @@
                 ><button id="toggle-view" class="secondary-button">
                   切换平面
                 </button>
+                <button id="scene-fullscreen" class="secondary-button" type="button" aria-label="全屏查看协作空间">⛶ 全屏</button>
               </div>
             </div>
             <div id="graph-shell" class="graph-shell">
@@ -230,17 +241,17 @@
         </div>
         <aside class="inspector panel" aria-labelledby="node-title">
           <div class="panel-heading">
-            <span class="eyebrow">NODE INSPECTOR</span
-            ><span id="node-kind" class="subtle-label">节点详情</span>
+            <span class="eyebrow">认识这位成员</span
+            ><span id="node-kind" class="subtle-label">角色详情</span>
           </div>
-          <h2 id="node-title">选择一个节点</h2>
+          <h2 id="node-title">和团队打个照面</h2>
           <div id="node-body" class="node-body">
             <p class="muted">
-              点击协作图里的总控、能力或员工，查看状态、Skill 约束和实际结果。
+              点击工作位，看看谁负责这件事、已经完成了什么，以及接下来要交给谁。
             </p>
           </div>
           <div class="inspector-principle">
-            <span>证据优先</span>
+            <span>每次交接，都有依据</span>
             <p>
               计划时间、就绪优先级与真正执行结果分别记录。图上的连接表示依赖，不代表已经通过验收。
             </p>
@@ -254,8 +265,8 @@
       >
         <div class="evidence-header">
           <div>
-            <p class="eyebrow">03 / INDEPENDENT EVIDENCE</p>
-            <h2 id="evidence-title">从测试结论追溯每一步</h2>
+            <p class="eyebrow">DELIVERY & EVIDENCE</p>
+            <h2 id="evidence-title">交付得怎么样，由你来检查</h2>
             <p id="run-caption" class="muted">
               选择运行后查看需求覆盖、测试步骤、补丁和模型调用。
             </p>
@@ -418,5 +429,6 @@ plain,[red]literal[/red]</textarea
         ><span>3D 是观测视图；验收以真实测试和构建证据为准。</span>
       </footer>
     </main>
+    <script type="module" src="/static/lab/lab-layout.mjs"></script>
   </body>
 </html>
