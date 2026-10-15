@@ -1,0 +1,14 @@
+{
+  "schema": "testfix.rich-cli.compatibility.v2",
+  "created_at": "2026-10-15T11:01:25.520756+00:00",
+  "preceding_attempt": "66c779505ef340cb83a758ca8be8c340",
+  "regression_files": {
+    "test_frozen_features.py": "03ccbe7246010abe745abb4fe71684ddf50f9cb380d97c74637cef125e4e96a1",
+    "test_head_tail_compatibility.py": "d2d02dea9a13eaac9ed32011f9c4e4077a41ccfe2cc2a34335d6939f50fb9dad"
+  },
+  "delivery_checks_sha256": "9a578e6c794041d22028f9ce5e7a0660be69ff6190767d35b90469759ab0191c",
+  "public_clarifications": [
+    "R2 compatibility: the pinned upstream CSV CLI accepts --head 1 --tail 1 together and gives --head precedence. Preserve this behavior in explicit CSV stdin and automatically detected CSV/TSV files. Do not introduce a new mutual-exclusion error. Both options reject zero via the existing Click IntRange(min=1), with usage exit code 2.",
+    "Apply a minimal change for literal table data. Preserve unrelated control flow, public options, help/docstrings, and formatting instead of compressing or rewriting the entire CLI module."
+  ]
+}

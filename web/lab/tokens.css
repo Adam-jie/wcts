@@ -1,0 +1,12 @@
+:root {
+  color-scheme: dark;
+  --page: #0b1418;
+  --surface: #132027;
+  --line: #26383f;
+  --text: #dfe9e5;
+  --muted: #80999f;
+  --lime: #bddc8c;
+  --cyan: #77c6c4;
+  --amber: #dfbd73;
+  --red: #e69987;
+}

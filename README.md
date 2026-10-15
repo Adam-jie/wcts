@@ -71,3 +71,13 @@ uv run python -X utf8 -m pytest -q --basetemp artifacts/public-full-check
 ## 许可证
 
 本项目原创代码采用 MIT；第三方 fixture 保持原许可证：rich-cli 为 MIT，Flaskr 为 BSD-3-Clause。WCTP 不随仓库分发。完整范围见 [LICENSE](LICENSE)、[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 可视化实验室与 v2 回归补充
+
+本地服务启动后打开 [TestFix Lab](http://127.0.0.1:8765/lab)。协作图展示真实记录，支持 3D/平面与节点详情；历史记录和新发起的真实模型运行明确区分。点击“启动真实测试”会消耗配置的模型服务额度。通过验收的 rich-cli 记录支持人工输入原版/交付版 CLI 对比，探针不调用模型、不回填历史验收分数。
+
+rich-cli v2 保留原冻结 13 项行为回归，增加 9 项同时使用 head/tail 的兼容性检查；原 CLI 在两者均为 1 时 head 优先，含 0 的参数仍是用法错误。新的注册脚本使用独立的 v2 封存文件和交付检查，旧报告与旧封存保留各自原始范围，不据此补记新成绩。
+
+SWE-bench Lite 与 BugsInPy 的固定版本元数据支持单独采集和只读预览；原始数据、参考补丁、隐藏测试和运行报告不随本仓库分发。**已采集不等于已适配或已评测**，当前直接可运行的完整工程仍是注册的 rich-cli 与 Flaskr。
+
+操作与证据说明：[实验室操作指南](docs/visual-lab.md)、[数据与评测协议](docs/benchmark-datasets.md)、[比赛演示指南](docs/contest-demo-playbook.md)。3D 动画、公开基准和本地服务不能代替 AgentArts/CodeArts 的真实采用与云端部署证据。

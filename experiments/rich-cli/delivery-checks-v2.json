@@ -1,0 +1,179 @@
+[
+  {
+    "name": "v2 compatibility: explicit-csv-stdin head1 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--csv",
+      "--head",
+      "1",
+      "--tail",
+      "1",
+      "-"
+    ],
+    "files": {},
+    "expected_exit": 0,
+    "stdout_contains": [
+      "firstrow"
+    ],
+    "stdout_not_contains": [
+      "secondrow",
+      "thirdrow"
+    ],
+    "stdin": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+  },
+  {
+    "name": "v2 compatibility: explicit-csv-stdin head0 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--csv",
+      "--head",
+      "0",
+      "--tail",
+      "1",
+      "-"
+    ],
+    "files": {},
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": [],
+    "stdin": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+  },
+  {
+    "name": "v2 compatibility: explicit-csv-stdin head1 tail0",
+    "args": [
+      "--width",
+      "160",
+      "--csv",
+      "--head",
+      "1",
+      "--tail",
+      "0",
+      "-"
+    ],
+    "files": {},
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": [],
+    "stdin": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+  },
+  {
+    "name": "v2 compatibility: auto-csv-file head1 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "1",
+      "--tail",
+      "1",
+      "selection.csv"
+    ],
+    "files": {
+      "selection.csv": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+    },
+    "expected_exit": 0,
+    "stdout_contains": [
+      "firstrow"
+    ],
+    "stdout_not_contains": [
+      "secondrow",
+      "thirdrow"
+    ]
+  },
+  {
+    "name": "v2 compatibility: auto-csv-file head0 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "0",
+      "--tail",
+      "1",
+      "selection.csv"
+    ],
+    "files": {
+      "selection.csv": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+    },
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "v2 compatibility: auto-csv-file head1 tail0",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "1",
+      "--tail",
+      "0",
+      "selection.csv"
+    ],
+    "files": {
+      "selection.csv": "name,value\nfirstrow,1\nsecondrow,2\nthirdrow,3\n"
+    },
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "v2 compatibility: auto-tsv-file head1 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "1",
+      "--tail",
+      "1",
+      "selection.tsv"
+    ],
+    "files": {
+      "selection.tsv": "name\tvalue\nfirstrow\t1\nsecondrow\t2\nthirdrow\t3\n"
+    },
+    "expected_exit": 0,
+    "stdout_contains": [
+      "firstrow"
+    ],
+    "stdout_not_contains": [
+      "secondrow",
+      "thirdrow"
+    ]
+  },
+  {
+    "name": "v2 compatibility: auto-tsv-file head0 tail1",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "0",
+      "--tail",
+      "1",
+      "selection.tsv"
+    ],
+    "files": {
+      "selection.tsv": "name\tvalue\nfirstrow\t1\nsecondrow\t2\nthirdrow\t3\n"
+    },
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": []
+  },
+  {
+    "name": "v2 compatibility: auto-tsv-file head1 tail0",
+    "args": [
+      "--width",
+      "160",
+      "--head",
+      "1",
+      "--tail",
+      "0",
+      "selection.tsv"
+    ],
+    "files": {
+      "selection.tsv": "name\tvalue\nfirstrow\t1\nsecondrow\t2\nthirdrow\t3\n"
+    },
+    "expected_exit": 2,
+    "stdout_contains": [],
+    "stdout_not_contains": []
+  }
+]

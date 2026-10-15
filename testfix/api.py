@@ -9,9 +9,10 @@ import re
 import threading
 import uuid
 import os
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
@@ -82,6 +83,18 @@ class ProjectRunRequest(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError('Collaboration request must not be empty')
+        return value
+
+
+class LabProbeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+    mode: str = 'csv'
+
+    @field_validator('mode')
+    @classmethod
+    def allowed_mode(cls, value):
+        if value not in {'csv', 'print', 'csv_head_tail'}:
+            raise ValueError('Only fixed CSV, CSV head/tail, and print probes are supported')
         return value
 
 
@@ -174,6 +187,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TestFix-Agent", version=__version__)
     store = RunStore(settings)
     app.state.store = store
+    probe_lock = threading.Lock()
     # Windows registry can associate .js with text/plain; nosniff then blocks it.
     mimetypes.init()
     mimetypes.add_type("text/javascript", ".js")
@@ -201,6 +215,54 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/")
     def homepage():
         return FileResponse(settings.root / "web" / "index.html")
+
+    @app.get('/lab')
+    def visual_lab():
+        return FileResponse(settings.root/'web/lab/index.html')
+
+    @app.get('/api/lab/bootstrap')
+    def lab_bootstrap():
+        from .lab import bootstrap
+        with store.lock:
+            store.refresh_external_runs()
+            values = copy.deepcopy(list(store.runs.values()))
+        try:
+            return bootstrap(settings, values)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(400, str(exc)) from None
+
+    @app.get('/api/lab/runs/{run_id}')
+    def lab_run(run_id: str):
+        from .lab import project_run
+        try:
+            return project_run(settings, store.snapshot(run_id))
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from None
+
+    @app.get('/api/lab/guide')
+    def lab_guide():
+        path = settings.root/'docs/contest-demo-sources.json'
+        return json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {'status': 'not_available'}
+
+    @app.get('/api/lab/datasets/{dataset_id}/tasks')
+    def lab_dataset_tasks(dataset_id: str, limit: int = Query(default=24, ge=1, le=50)):
+        from .benchmark_data import list_benchmark_tasks
+        try:
+            return list_benchmark_tasks(settings, dataset_id, limit)
+        except (ValueError, OSError) as exc:
+            raise HTTPException(400, str(exc)) from None
+
+    @app.post('/api/lab/runs/{run_id}/probe')
+    def lab_probe(run_id: str, body: LabProbeRequest):
+        from .lab_probe import execute_probe
+        if not probe_lock.acquire(blocking=False):
+            raise HTTPException(429, 'An interactive probe is running; wait for its result')
+        try:
+            return execute_probe(settings, store.snapshot(run_id), body.text, body.mode)
+        except (ValueError, OSError, KeyError, zipfile.BadZipFile) as exc:
+            raise HTTPException(409, str(exc)) from None
+        finally:
+            probe_lock.release()
 
     @app.get("/api/health")
     def health():

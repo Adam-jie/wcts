@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0b1418" />
+    <title>TestFix Lab · 多智能体实证实验室</title>
+    <link rel="stylesheet" href="/static/lab/lab.css" />
+    <script type="module" src="/static/lab/lab.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand" href="/"
+        ><span class="brand-symbol">t<span>f</span></span
+        ><span>TestFix <b>LAB</b><small>多智能体实证实验室</small></span></a
+      >
+      <nav class="main-nav" aria-label="实验室导航">
+        <a href="#workspace" class="active">运行工作台</a
+        ><a href="#evidence">验证证据</a><a href="#datasets">实验数据集</a>
+      </nav>
+      <div class="header-status">
+        <span id="connection-dot" class="status-dot"></span
+        ><span id="connection-text">连接本地服务</span
+        ><button
+          id="refresh"
+          class="icon-button"
+          aria-label="刷新运行与配置"
+          title="刷新运行与配置"
+        >
+          ↻
+        </button>
+      </div>
+    </header>
+    <main id="workspace">
+      <section class="intro">
+        <div>
+          <p class="eyebrow">FROM REQUIREMENT TO VERIFIED PATCH</p>
+          <h1>看见协作，亲手验证<span>。</span></h1>
+          <p>
+            一项真实需求，一条可追溯的执行链。每个状态、补丁和测试结果都来自运行记录。
+          </p>
+        </div>
+        <a href="/" class="quiet-link">返回完整工作台 ↗</a>
+      </section>
+      <div id="global-error" class="alert error" role="alert" hidden></div>
+      <div id="link-notice" class="alert" role="status" hidden></div>
+      <section class="workbench">
+        <aside class="setup panel" aria-labelledby="setup-title">
+          <div class="panel-heading">
+            <span class="eyebrow">01 / SETUP</span
+            ><span class="subtle-label">真实模型运行</span>
+          </div>
+          <h2 id="setup-title">开始一次新实验</h2>
+          <p class="muted small">
+            在独立候选副本中补全；原始工程与验收测试保留。
+          </p>
+          <form id="run-form">
+            <label
+              >选择工程<select id="project" required disabled>
+                <option value="">读取可运行工程…</option>
+              </select></label
+            >
+            <p id="project-note" class="field-note"></p>
+            <label
+              >描述你的需求<textarea
+                id="requirement"
+                rows="7"
+                maxlength="20000"
+                required
+                placeholder="描述预期行为、需要保留的功能与验收条件…"
+              ></textarea>
+            </label>
+            <p class="field-note requirement-note">
+              当前按所选工程的注册需求和验收合同执行；新功能需先注册验收。
+            </p>
+            <details class="advanced" open>
+              <summary>模型与资源预算</summary>
+              <label
+                >模型服务<select id="provider" required disabled>
+                  <option value="">读取配置…</option>
+                </select></label
+              >
+              <label
+                >请求模型<input
+                  id="model"
+                  value="gpt-5.6-sol"
+                  maxlength="120"
+                  required
+              /></label>
+              <div class="field-pair">
+                <label
+                  >模型并发槽位<input
+                    id="slots"
+                    type="number"
+                    min="1"
+                    max="8"
+                    value="2"
+                    required /></label
+                ><label
+                  >最多修复轮数<input
+                    id="rounds"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value="2"
+                    required
+                /></label>
+              </div>
+              <div class="field-pair">
+                <label
+                  >时间上限（分钟）<input
+                    id="wall-minutes"
+                    type="number"
+                    min="1"
+                    max="120"
+                    value="120"
+                    required /></label
+                ><label
+                  >Token 上限<input
+                    id="tokens"
+                    type="number"
+                    min="5000"
+                    max="2000000"
+                    step="1000"
+                    value="1000000"
+                    required
+                /></label>
+              </div>
+            </details>
+            <p id="provider-note" class="field-note">
+              提交会调用所选真实模型，消耗配置的服务额度；不会把历史回放当作新实验。
+            </p>
+            <div id="form-error" class="alert error" role="alert" hidden></div>
+            <button
+              id="start-run"
+              class="primary-button"
+              type="submit"
+              disabled
+            >
+              <span>启动真实测试</span><span>↗</span>
+            </button>
+          </form>
+          <div class="setup-foot">
+            <span class="tiny-shield">◇</span
+            ><span>受约束的工具调用 · 冻结验收测试 · 独立结果判定</span>
+          </div>
+        </aside>
+        <div class="run-stage">
+          <div class="history-bar">
+            <label for="history">查看运行</label
+            ><select id="history" disabled>
+              <option value="">加载真实运行记录…</option></select
+            ><button id="load-history" class="secondary-button" disabled>
+              载入记录
+            </button>
+          </div>
+          <div id="mode-banner" class="mode-banner">
+            <span class="mode-icon">◷</span>
+            <div>
+              <strong id="mode-title">尚未选择运行</strong>
+              <p id="mode-description">
+                历史记录与新启动的真实模型运行会明确区分。
+              </p>
+            </div>
+            <span id="run-status" class="status-badge">等待选择</span>
+          </div>
+          <section class="scene-panel panel" aria-labelledby="scene-title">
+            <div class="scene-heading">
+              <div>
+                <p class="eyebrow">02 / ORCHESTRATION</p>
+                <h2 id="scene-title">总控与员工协作图</h2>
+              </div>
+              <div class="scene-actions">
+                <button
+                  id="reset-view"
+                  class="icon-button"
+                  title="重置视角"
+                  aria-label="重置视角"
+                >
+                  ⌖</button
+                ><button id="toggle-view" class="secondary-button">
+                  切换平面
+                </button>
+              </div>
+            </div>
+            <div id="graph-shell" class="graph-shell">
+              <div id="scene" class="scene" aria-label="可交互任务依赖图"></div>
+              <div id="graph-empty" class="graph-empty">
+                <span>⌘</span><strong>真实执行轨迹将在这里展开</strong>
+                <p>载入一个历史实验，或在左侧启动新实验。</p>
+              </div>
+              <div class="scene-grid" aria-hidden="true"></div>
+              <div class="scene-caption">
+                <span id="render-mode">准备 3D 视图</span
+                ><span id="interaction-hint"
+                  >拖动旋转 · 滚轮缩放 · 点击节点</span
+                >
+              </div>
+            </div>
+            <div class="graph-footer">
+              <div class="legend">
+                <span><i class="legend-success"></i>已完成</span
+                ><span><i class="legend-running"></i>执行中</span
+                ><span><i class="legend-failed"></i>失败</span
+                ><span><i class="legend-pending"></i>等待</span>
+              </div>
+              <p id="dispatch-note">
+                依赖与资源约束满足后，按出度优先选择就绪任务。
+              </p>
+            </div>
+          </section>
+          <section class="metrics" aria-label="来自执行记录的实测指标">
+            <article>
+              <span>模型调用</span><strong id="metric-calls">—</strong
+              ><small>实际调用记录</small>
+            </article>
+            <article>
+              <span>实测峰值并发</span><strong id="metric-concurrency">—</strong
+              ><small>WCTP 调用时间重叠</small>
+            </article>
+            <article>
+              <span>提供方报告 Token</span><strong id="metric-tokens">—</strong
+              ><small id="metric-token-note">缺失时不推算</small>
+            </article>
+            <article>
+              <span>运行耗时</span><strong id="metric-duration">—</strong
+              ><small>执行记录累计秒数</small>
+            </article>
+          </section>
+        </div>
+        <aside class="inspector panel" aria-labelledby="node-title">
+          <div class="panel-heading">
+            <span class="eyebrow">NODE INSPECTOR</span
+            ><span id="node-kind" class="subtle-label">节点详情</span>
+          </div>
+          <h2 id="node-title">选择一个节点</h2>
+          <div id="node-body" class="node-body">
+            <p class="muted">
+              点击协作图里的总控、能力或员工，查看状态、Skill 约束和实际结果。
+            </p>
+          </div>
+          <div class="inspector-principle">
+            <span>证据优先</span>
+            <p>
+              计划时间、就绪优先级与真正执行结果分别记录。图上的连接表示依赖，不代表已经通过验收。
+            </p>
+          </div>
+        </aside>
+      </section>
+      <section
+        id="evidence"
+        class="panel evidence-panel"
+        aria-labelledby="evidence-title"
+      >
+        <div class="evidence-header">
+          <div>
+            <p class="eyebrow">03 / INDEPENDENT EVIDENCE</p>
+            <h2 id="evidence-title">从测试结论追溯每一步</h2>
+            <p id="run-caption" class="muted">
+              选择运行后查看需求覆盖、测试步骤、补丁和模型调用。
+            </p>
+          </div>
+          <div class="download-actions">
+            <a id="download-json" class="secondary-button" hidden>JSON 报告 ↓</a
+            ><a id="download-md" class="secondary-button" hidden>Markdown ↓</a
+            ><a id="download-zip" class="secondary-button" hidden
+              >工程与证据 ZIP ↓</a
+            >
+          </div>
+        </div>
+        <div id="warnings" class="warnings"></div>
+        <div id="verdict" class="verdict neutral">尚无本次运行的验收结论</div>
+        <div id="postchecks-panel" class="postcheck-panel" hidden></div>
+        <div class="evidence-tabs" role="tablist" aria-label="验证证据">
+          <button
+            id="tab-results"
+            class="active"
+            role="tab"
+            aria-selected="true"
+            aria-controls="evidence-content"
+            data-tab="results"
+          >
+            测试结果</button
+          ><button
+            id="tab-probe"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="probe"
+          >
+            自己输入测试 ↗</button
+          ><button
+            id="tab-coverage"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="coverage"
+          >
+            需求覆盖</button
+          ><button
+            id="tab-steps"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="steps"
+          >
+            测试步骤</button
+          ><button
+            id="tab-diff"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="diff"
+          >
+            代码补丁</button
+          ><button
+            id="tab-events"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="events"
+          >
+            执行事件</button
+          ><button
+            id="tab-models"
+            role="tab"
+            aria-selected="false"
+            aria-controls="evidence-content"
+            data-tab="models"
+          >
+            模型与预算
+          </button>
+        </div>
+        <div
+          id="evidence-content"
+          class="evidence-content"
+          role="tabpanel"
+          aria-labelledby="tab-results"
+        >
+          <p class="empty-copy">尚未选择运行。</p>
+        </div>
+        <section id="probe-panel" class="probe-panel" hidden>
+          <div class="probe-intro">
+            <div>
+              <h3>用你自己的输入，对比原版与修复版</h3>
+              <p>
+                实际启动两次 CLI
+                子进程，不调用大模型。此人工探针不计入原始验收分数。
+              </p>
+            </div>
+            <span class="subtle-label">真实进程执行</span>
+          </div>
+          <label
+            >输入模式<select id="probe-mode">
+              <option value="csv">CSV 表格</option>
+              <option value="csv_head_tail">CSV · 同时 head=1 / tail=1</option>
+              <option value="print">保留原有 --print 样式解析</option>
+            </select></label>
+          <p id="probe-mode-note" class="field-note" hidden>此模式固定执行 --csv --head 1 --tail 1；原版应按 head 优先只显示首行。</p>
+          <label
+            >输入内容<textarea
+              id="probe-input"
+              rows="5"
+              maxlength="5000"
+              spellcheck="false"
+            >
+name,value
+[bold],[/not-opened]
+plain,[red]literal[/red]</textarea
+            >
+          </label>
+          <div class="probe-actions">
+            <span id="probe-note"
+              >仅通过验收的 rich-cli 运行可以执行此探针。</span
+            ><button id="probe-run" class="primary-button" disabled>
+              运行原版与修复版 ↗
+            </button>
+          </div>
+          <div id="probe-error" class="alert error" role="alert" hidden></div>
+          <div class="probe-outputs">
+            <article>
+              <header>
+                原始工程 <span id="probe-baseline-code">尚未执行</span>
+              </header>
+              <pre id="probe-baseline">等待你的测试输入。</pre>
+            </article>
+            <article>
+              <header>
+                本次修复工程 <span id="probe-candidate-code">尚未执行</span>
+              </header>
+              <pre id="probe-candidate">等待你的测试输入。</pre>
+            </article>
+          </div>
+          <p id="probe-receipt" class="mono small muted"></p>
+        </section>
+      </section>
+      <section
+        id="datasets"
+        class="datasets-section"
+        aria-labelledby="datasets-title"
+      >
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">04 / REPRODUCIBLE BENCHMARKS</p>
+            <h2 id="datasets-title">准备真实、可复现的测试集</h2>
+            <p class="muted">
+              公开来源与许可证逐项记录。已收集数据不等于已适配执行；结果只统计实际运行。
+            </p>
+          </div>
+          <span id="dataset-count" class="subtle-label">读取数据集目录</span>
+        </div>
+        <div id="dataset-list" class="dataset-list">
+          <p class="empty-copy">正在读取本地数据集状态…</p>
+        </div>
+      </section>
+      <footer>
+        <span>TESTFIX LAB <b>需求 → 协作 → 补全 → 独立验证</b></span
+        ><span>3D 是观测视图；验收以真实测试和构建证据为准。</span>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -24,3 +24,9 @@ All nine `testfix/skill_library/` Skill documents and contracts were written for
 ## Installed dependencies
 
 Python dependency source distributions, wheels, model credentials and SDK source trees are not bundled. Runtime and development dependencies are declared in `pyproject.toml` / `uv.lock`; AgentArts SDK is separately pinned in `agentarts/requirements.txt`. Their own licenses apply when obtained through the relevant package manager. This source release does not relicense those dependencies or imply upstream endorsement.
+
+## Bundled visualization dependency
+
+`web/lab/vendor/three.module.min.js` is Three.js 0.170.0 from the official [r170 release](https://github.com/mrdoob/three/tree/r170), distributed under MIT. Its original license is retained in `web/lab/vendor/THREE-LICENSE.txt`; source URL and the fixed SHA-256 are recorded in `web/lab/vendor/SOURCE.md`. The local application does not request a CDN at runtime.
+
+SWE-bench Lite and BugsInPy raw datasets are not bundled. `scripts/collect_benchmarks.py` downloads separately pinned metadata and retains evaluator-only source evidence locally. SWE-bench declares MIT for its harness; original project licenses remain effective. The pinned BugsInPy archive has no identified LICENSE, so its metadata is not redistributed by this source release. Collection and environment limitations are recorded in `docs/benchmark-datasets.md`.

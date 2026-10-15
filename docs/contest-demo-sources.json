@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-15",
+  "timezone": "Asia/Shanghai",
+  "track": "第十一届华为ICT大赛·创新赛·赛题2：基于华为云AgentArts智能体开发平台的Agent设计和应用",
+  "rules_status": "partial_primary_sources_verified_full_topic2_attachment_unavailable",
+  "official_facts": [
+    {"id": "topic2", "text": "本届高校正式通知列有 AgentArts 智能体设计和应用赛题。", "status": "verified_university_notice", "source_ids": ["nuc-2026", "bjut-2026"]},
+    {"id": "submission", "text": "创新赛需提交技术文档、代码、演示视频；中国总决赛和全球总决赛进行演示答辩。", "status": "verified_university_notice", "source_ids": ["nuc-2026"]},
+    {"id": "huawei-technology", "text": "实际采用赛题规定的华为技术是资格要求。", "status": "verified_university_notice", "source_ids": ["dlut-2026"]},
+    {"id": "reproducibility", "text": "提交材料应能复现答辩展示效果。", "status": "verified_university_notice", "source_ids": ["dlut-2026"]},
+    {"id": "agentarts-capability", "text": "AgentArts 支持自带 Agent/自研框架运行时托管与链路观测；这是产品能力，不能代替赛事资格审核。", "status": "verified_product_documentation", "source_ids": ["agentarts-product"]}
+  ],
+  "unverified_items": [
+    "第十一届中国区赛题2完整评分权重",
+    "本届演示视频时长、答辩分钟数及上传格式与容量",
+    "报名模板中的CodeArts、Skills、RDS/Redis要求与AgentArts赛题完整附件的对应关系",
+    "平台资源、地区和版本的具体限定"
+  ],
+  "current_project_status": {
+    "local_workflow": "implemented_and_experimented",
+    "agentarts_cloud_deployment": "not_completed",
+    "codearts_usage_evidence": "not_completed",
+    "official_topic2_qualification": "not_confirmed",
+    "historical_experiment": {
+      "run_id": "20dc46b38e3b4ee09cb40efedbe4c0bd",
+      "project_url": "https://github.com/Textualize/rich-cli",
+      "issue_url": "https://github.com/Textualize/rich-cli/issues/147",
+      "baseline_commit": "46f4d2469097be395558768714a5f07ebccf1412",
+      "model_calls": 13,
+      "elapsed_seconds": 427.709,
+      "generated_tests_before": "3/19",
+      "generated_tests_after": "19/19",
+      "independent_before": "3/21",
+      "independent_after": "21/21",
+      "regression_after": "14/14",
+      "installed_cli_after": "16/16",
+      "limitations": ["单次历史运行，不能推导总体成功率或加速比", "真实并行员工是两个探索任务", "补丁含额外格式和文档字符串改写"]
+    }
+  },
+  "demo_recommendations": {
+    "status": "project_recommendation_not_official_rule",
+    "rehearsal_minutes": 8,
+    "steps": ["选择需求与固定原版", "复现原版失败", "总控分解与约束派工", "员工实际读取和工具调用", "查看补丁与反馈", "独立验收和旧功能回归", "构建安装并运行业务", "核验实际华为平台链路和导出证据"],
+    "evidence_principle": "3D图显示真实运行事件；历史回放和合成演示应明确标注，实际通过由原始运行与独立验收决定。",
+    "retention": ["全流程未剪辑录屏", "全部失败尝试", "任务清单及固定commit", "原始日志与测试XML", "补丁和源码/交付哈希", "部署完成后的平台Trace和资源证据"]
+  },
+  "sources": [
+    {"id": "nuc-2026", "title": "关于举办中北大学“2026年第十一届华为ICT大赛”的通知", "url": "https://cxcy.nuc.edu.cn/info/1040/7632.htm", "accessed_at": "2026-10-15", "source_type": "university_official_notice", "scope": "本届赛题、提交材料、演示答辩", "short_quote": "技术文档、代码文件和演示视频", "status": "read"},
+    {"id": "dlut-2026", "title": "关于组织参加第十一届华为ICT大赛报名通知", "url": "https://chuangxin.dlut.edu.cn/info/1020/16867.htm", "accessed_at": "2026-10-15", "source_type": "university_official_notice", "scope": "本届资格与材料复现要求", "short_quote": "无法复现答辩PPT展示效果", "status": "read"},
+    {"id": "bjut-2026", "title": "2026年（第五届）华为ICT大赛（创新赛）校内选拔赛报名通知", "url": "https://cs.bjut.edu.cn/info/1076/4323.htm", "accessed_at": "2026-10-15", "source_type": "university_official_notice", "scope": "本届赛题和该校附件入口；校赛分数不等于国赛评分表", "short_quote": "各赛题具体分值分配见附件2。", "status": "notice_read_attachments_unavailable"},
+    {"id": "huawei-contest", "title": "第十一届华为ICT大赛官网", "url": "https://e.huawei.com/cn/talent/ict-academy/#/ict-contest?compId=85132018", "accessed_at": "2026-10-15", "source_type": "organizer_portal", "scope": "最终规则核对入口；动态正文未取得", "short_quote": "", "status": "dynamic_page_text_unavailable"},
+    {"id": "agentarts-product", "title": "什么是智果（AgentArts）智能体平台？", "url": "https://support.huaweicloud.com/productdesc-agentarts/agentarts_03_0002.html", "accessed_at": "2026-10-15", "source_type": "huawei_official_product_documentation", "scope": "自研Agent托管和观测能力，非赛事评分规则", "short_quote": "运行时托管", "status": "read"},
+    {"id": "codearts-skill", "title": "技能—华为云码道CodeArts代码智能体", "url": "https://support.huaweicloud.com/usermanual-codeartsagent/codeartsagent_ug_0024.html", "accessed_at": "2026-10-15", "source_type": "huawei_official_product_documentation", "scope": "CodeArts Skill能力，非AgentArts赛题资格证明", "short_quote": "指令、脚本和资源构成的集合", "status": "read"}
+  ]
+}
