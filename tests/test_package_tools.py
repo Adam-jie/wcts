@@ -9,7 +9,7 @@ import zipfile
 import pytest
 
 from testfix import package_tools as tools
-from testfix.project_eval import _mapping_sha256
+from testfix.project_eval import _functional_failure, _mapping_sha256
 from testfix.project_tools import files_under
 
 
@@ -124,6 +124,35 @@ def test_actual_pytest_worker_binds_src_root_without_preimporting_cli(tmp_path):
     assert result['successful'] is True and result['total'] == result['passed'] == 1
     assert result['binding']['before_modules'] == {'demo_pkg': str((project / 'src/demo_pkg/__init__.py').resolve())}
     assert result['command'][1:3] == ['-I', '-B']
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='Windows path length reproduction')
+def test_actual_worker_saves_evidence_in_deep_workspace(tmp_path):
+    project = mini_project(tmp_path / 'project')
+    with (project / 'tests/test_public.py').open('a', encoding='utf-8') as stream:
+        stream.write('\ndef test_sqlite_database_with_deep_workspace(tmp_path):\n'
+                     '    import sqlite3\n'
+                     '    with sqlite3.connect(tmp_path / "tasks.sqlite3") as db:\n'
+                     '        assert db.execute("SELECT 1").fetchone()[0] == 1\n')
+    padding = max(1, 204 - len(str(tmp_path)) - 1)
+    output = tmp_path / ('x' * padding)
+    result = tools.run_package_suite(Path(sys.executable), project, project / 'tests', output,
+                                     'baseline_public-generated', configuration())
+    assert result['successful'] is True, result
+    assert Path(result['binding_path']).is_file()
+    assert Path(result['junit_path']).is_file()
+
+
+def test_execution_errors_are_not_reported_as_assertion_failures(tmp_path):
+    project = mini_project(tmp_path / 'project')
+    test = project / 'tests/test_public.py'
+    test.write_text('import sqlite3\ndef test_database():\n    raise sqlite3.OperationalError("unable to open database file")\n', encoding='utf-8')
+    error = tools.run_package_suite(Path(sys.executable), project, project / 'tests', tmp_path / 'error', 'fixture', configuration())
+    assert not _functional_failure(error)
+    assert _functional_failure(error, require_assertion=False)
+    test.write_text('def test_behavior():\n    assert 1 == 2\n', encoding='utf-8')
+    failed_assertion = tools.run_package_suite(Path(sys.executable), project, project / 'tests', tmp_path / 'assertion', 'fixture', configuration())
+    assert _functional_failure(failed_assertion)
 
 
 def test_suite_identity_is_exactly_paired_across_repository_roots(tmp_path):

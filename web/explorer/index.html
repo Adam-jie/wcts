@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b111c">
+  <title>无遁 · 多智能体架构模型</title>
+  <link rel="stylesheet" href="/static/explorer/explorer.css">
+  <link rel="stylesheet" href="/static/explorer/explorer-layout.css">
+  <link rel="stylesheet" href="/static/explorer/framework.css">
+  <script type="module" src="/static/explorer/explorer.js"></script>
+  <link rel="stylesheet" href="/static/theme.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="返回 TestFix 工作台">
+      <svg viewBox="0 0 36 36" aria-hidden="true"><path d="m18 3 13 7.5v15L18 33 5 25.5v-15Z"/><path d="m5 10.5 13 7.8 13-7.8M18 18v15M18 3v8M5 25.5l7-4M31 25.5l-7-4"/><circle cx="18" cy="18" r="4"/></svg>
+      <span>无遁<span class="brand-english">TESTFIX AGENT</span></span>
+    </a>
+    <nav aria-label="页面导航"><a href="/">返回首页</a><a href="/explorer" aria-current="page">架构模型<span class="nav-dot"></span></a><a href="/engineering/flow">连线工作台 <span>↗</span></a></nav>
+    <div class="top-actions"><span class="demo-tag"><i></i>交互架构模型</span><button id="guide-open" class="icon-button" aria-label="打开操作指南" title="操作指南">?</button></div>
+  </header>
+
+  <main class="workbench">
+    <aside class="parts-panel">
+      <div class="panel-kicker">SYSTEM ARCHITECTURE</div>
+      <div class="panel-heading"><h1>三大核心模块</h1><span class="number-tag">03</span></div>
+      <label class="search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="part-search" type="search" placeholder="查找部件或 Skill" aria-label="查找部件或 Skill" autocomplete="off"></label>
+      <div id="parts-list" class="parts-list" aria-label="可选择的系统部件"></div>
+      <p id="search-empty" class="search-empty" hidden>没有匹配的部件</p>
+      <div class="sidebar-bottom"><div class="architecture-note"><span class="small-orbit">◎</span><p><span id="capability-summary">3 个主模块 · 一次完整展开</span><br><strong>主控 → 生成补全 → 自动化测试</strong></p></div><a href="/engineering" class="experiment-link">查看真实运行 <span>↗</span></a></div>
+    </aside>
+
+    <section class="viewport-panel" aria-label="交互式多智能体三维模型">
+      <div class="scene-header"><div><p class="eyebrow">WHOLE BRANCH EXPLORER</p><h2>主控、补全、测试<span>。</span></h2><p class="scene-subtitle">点一次主模块，所属 Agent、功能和算法全部展开。</p><div class="model-views" role="group" aria-label="模型视图"><button id="view-assembled" data-view="assembled" aria-pressed="false">收拢</button><button id="view-layered" data-view="layered" aria-pressed="true">全部展开</button><button id="view-focused" data-view="focused" aria-pressed="false">聚焦</button></div></div><span class="view-badge">FRAMEWORK <i>04</i></span></div>
+      <div id="scene" class="scene">
+        <canvas id="engine-canvas" tabindex="0" role="img" aria-label="三大主模块；点击一次展开整棵分支，所属 Agent 和算法全部显示，点击子项只高亮并查看详情；可旋转缩放"></canvas>
+        <div id="scene-labels" class="scene-labels"><svg id="label-lines" aria-hidden="true"></svg><div id="label-buttons"></div></div>
+        <div id="scene-loading" class="scene-message"><span class="loader"></span>正在构建三维引擎</div>
+        <div id="scene-fallback" class="scene-message fallback" hidden><span>3D 视图暂不可用</span><p id="fallback-description">当前浏览器没有可用的 WebGL 2。仍可从左侧部件清单查看完整结构。</p><button id="retry-webgl" class="text-button">重新加载</button></div>
+        <div class="scene-coordinate" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M25 38V7M25 38 51 47M25 38 5 51"/><circle cx="25" cy="38" r="2"/><text x="22" y="8">Y</text><text x="50" y="55">X</text><text x="0" y="59">Z</text></svg></div>
+        <div class="scene-side-tools"><button id="zoom-in" class="icon-button" aria-label="放大视图" title="放大">+</button><button id="zoom-out" class="icon-button" aria-label="缩小视图" title="缩小">−</button><span></span><button id="reset-view" class="icon-button" aria-label="恢复初始视角" title="恢复视角"><svg viewBox="0 0 20 20"><path d="M4 8a6.5 6.5 0 1 1-.2 5M4 3v5h5"/></svg></button><button id="fullscreen" class="icon-button" aria-label="全屏查看三维模型" title="全屏"><svg viewBox="0 0 20 20"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button></div>
+        <div class="scene-caption"><span id="scene-mode"><i></i>组合视图</span><span>全部由代码生成 · 无外部模型</span></div>
+      </div>
+      <div class="scene-controls">
+        <div class="explode-controls"><button id="explode-all" class="primary-button"><svg viewBox="0 0 20 20"><path d="m10 2 7 4-7 4-7-4Zm-7 9 7 4 7-4M3 15l7 4 7-4"/></svg><span>展开全部</span></button><label class="explode-range" for="explode-range"><span>分解程度 <output id="explode-value" for="explode-range">0%</output></span><input id="explode-range" type="range" min="0" max="100" value="0" aria-label="全部部件的分解程度"></label></div>
+        <div class="display-controls"><button id="toggle-connections" class="toggle-button" aria-pressed="true"><span class="toggle-indicator"></span>连线</button><button id="toggle-labels" class="toggle-button" aria-pressed="true"><span class="toggle-indicator"></span>标注</button><button id="toggle-rotate" class="toggle-button" aria-pressed="false"><span class="toggle-indicator"></span>自动旋转</button></div>
+      </div>
+      <div class="interaction-hint"><span><svg viewBox="0 0 16 18"><rect x="3" y="1" width="10" height="15" rx="5"/><path d="M8 1v5"/></svg>拖动旋转</span><span><b>↕</b>滚轮缩放</span><span><b>⌘</b>点选详情</span><span class="hint-extra">双击聚焦 · Shift 平移</span><a class="model-details-link" href="#component-inspector">部件详情 ↓</a></div>
+    </section>
+
+    <aside class="inspector" id="component-inspector" aria-label="所选部件详情">
+      <div class="inspector-top"><span class="panel-kicker">MODULE INSPECTOR</span><span id="part-position">主模块 01 / 03</span></div>
+      <div id="part-symbol" class="part-symbol" aria-hidden="true"></div>
+      <div id="part-layer" class="model-layer">01 / 主模块</div>
+      <button id="parent-module" class="parent-module" hidden></button>
+      <div class="detail-title"><span id="part-category" class="detail-category">CodeAgent 主控</span><h2 id="part-title">CodeAgent 主控</h2><p id="part-english">CODEAGENT CONTROL</p></div>
+      <nav id="module-path" class="module-path" aria-label="当前能力路径" hidden></nav>
+      <div class="detail-tabs" role="tablist" aria-label="部件详情分类"><button role="tab" id="tab-overview" aria-selected="true" aria-controls="detail-content" data-tab="overview" tabindex="0">概览</button><button role="tab" id="tab-parameters" aria-selected="false" aria-controls="detail-content" data-tab="parameters" tabindex="-1">参数</button><button role="tab" id="tab-handoff" aria-selected="false" aria-controls="detail-content" data-tab="handoff" tabindex="-1">数据交接</button></div>
+      <div id="detail-content" class="detail-content" role="tabpanel" aria-labelledby="tab-overview"></div>
+      <div class="inspector-bottom"><button id="unpack-part" class="unpack-button">拆解当前部件 <span>↗</span></button><p>架构展示 · 操作不会启动任务</p></div>
+    </aside>
+  </main>
+
+  <footer class="page-footer"><span><i></i>TestFix Agent <b>/</b> 架构模型 04</span><span id="footer-capabilities">整棵分支一次展开 · Agent 职责 · MCTS 候选空间树</span><a href="/engineering">查看执行流程 <span>↗</span></a></footer>
+  <div id="announcement" class="sr-only" aria-live="polite"></div>
+  <dialog id="guide-dialog"><button id="guide-close" class="icon-button" aria-label="关闭操作指南">×</button><p class="eyebrow">EXPLORE AT YOUR OWN PACE</p><h2>把系统拆开，理解它。</h2><p class="guide-intro">点击一次主模块即可展开完整结构，不必逐个打开。全部后代会同时出现在三维视图、左侧树和完整功能清单中。</p><ol><li><b>01</b><div><strong>转一转，换个角度</strong><p>鼠标拖动旋转，滚轮或双指缩放。按住 Shift 拖动平移。</p></div></li><li><b>02</b><div><strong>点一个模块，整棵分支展开</strong><p>点击主模块，一次显示所属的所有 Agent、功能和算法。之后点子项只高亮与查看详情；使用一键收拢关闭。</p></div></li><li><b>03</b><div><strong>理解模块如何配合</strong><p>右侧查看职责、参数和数据交接。拖动分解滑块观察整个系统。</p></div></li></ol><div class="keyboard-guide"><kbd>←</kbd><kbd>→</kbd>旋转 <kbd>+</kbd><kbd>−</kbd>缩放 <kbd>Home</kbd>复位 <kbd>Esc</kbd>关闭</div><button id="guide-start" class="primary-button">开始探索 <span>↗</span></button></dialog>
+</body>
+</html>

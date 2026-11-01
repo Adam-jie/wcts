@@ -145,7 +145,7 @@ class BoundaryTools:
         identity = {"regression": "original::test_original", "generated": "generated::test_value",
                     "independent": "private::test_value"}[name]
         passed = status == "passed"
-        return {"total": 1, "passed": int(passed), "cases": [{"id": identity, "status": status}],
+        return {"total": 1, "passed": int(passed), "cases": [{"id": identity, "status": status, "assertion_failure": status == "failure"}],
                 "case_ids": [identity], "duplicate_case_ids": [], "collection_errors": 0,
                 "runnable": True, "successful": passed, "timeout": False,
                 "exit_code": 0 if passed else 1, "duration_s": 0, "command": [], "cwd": str(project),
@@ -299,6 +299,15 @@ def test_missing_required_gate_is_rejected_even_when_aggregate_says_success(harn
     harness.tools.missing_gate = gate
     assert_not_accepted(harness.execute())
     assert any(call[0] == "verify" for call in harness.tools.calls)
+
+
+def test_research_run_stops_after_independent_failure(harness):
+    harness.run['independent_once'] = True
+    harness.tools.first_acceptance_fails = True
+    result = harness.execute()
+    assert result['status'] == 'rejected'
+    assert [call[0] for call in harness.tools.calls].count('verify') == 1
+    assert len([call for call in harness.provider.invocations if call['skill'] == 'repair-code']) == 1
 
 
 def test_independent_failure_retries_with_new_patch_hash_and_new_review(harness):
@@ -503,3 +512,29 @@ def test_provider_transport_error_persists_failed_trace_without_fallback(harness
     capability = next(item for item in result["workflow"]["capabilities"] if item["skill_id"] == "ground-code")
     assert capability["status"] == "failed"
     assert harness.tools.calls == []
+
+
+@pytest.mark.parametrize('persistent',[False,True])
+def test_provider_timeout_retries_once_and_accounts_failed_calls(harness,persistent):
+    original=harness.provider.invoke
+    attempts=[]
+    def invoke(skill,context,schema,**kwargs):
+        if skill=='ground-code':
+            attempts.append(skill)
+            if persistent or len(attempts)==1:
+                harness.provider.calls.append({'skill_id':skill,'provider':'injected-unit-boundary-fixture',
+                    'usage':{'total_tokens':17},'status':'failed','error':{'code':'timeout'}})
+                raise ProjectModelError('timeout','Synthetic transient deadline')
+        return original(skill,context,schema,**kwargs)
+    harness.provider.invoke=invoke
+    result=harness.execute()
+    calls=[item for item in result['model_calls'] if item['skill_id']=='ground-code']
+    assert len(attempts)==2 and len(calls)==2
+    assert calls[0]['status']=='failed'
+    assert sum(item.get('stage')=='service_retry' for item in result['events'])==1
+    assert result['workflow']['budget']['accounted_tokens']>=sum(item.get('usage',{}).get('total_tokens',0) for item in result['model_calls'])
+    if persistent:
+        assert_not_accepted(result)
+        assert calls[1]['status']=='failed' and harness.tools.calls==[]
+    else:
+        assert result['status']=='completed' and calls[1]['status']=='completed'

@@ -1,0 +1,24 @@
+{
+  "schema": "testfix.specialist-catalog.v1",
+  "version": "1.0.0",
+  "extends": ["explore-repository", "repair-code"],
+  "authority": "Inherit host file ownership, action allowlist, budget and immutable verification gates. Prose adds no tools or permissions.",
+  "enforcement": {
+    "routing_and_adapter_readiness": "testfix.specialists.route_task",
+    "trusted_document_hashes": "testfix.specialists.SpecialistCatalog.verify",
+    "file_ownership_and_tool_actions": "testfix.team_runtime.execute_team_round",
+    "domain_quality_instructions": "prompt_only; verified by existing public and independent gates"
+  },
+  "specialists": [
+    {"id":"software","name":"软件实现 Agent","execution_capabilities":["source_tools"]},
+    {"id":"javascript","name":"JavaScript / TypeScript Agent","execution_capabilities":["node_build","browser_tests"]},
+    {"id":"frontend","name":"网页与交互 Agent","execution_capabilities":["rendered_templates"]},
+    {"id":"threejs","name":"Three.js 场景 Agent","execution_capabilities":["webgl_browser"]},
+    {"id":"backend","name":"后端接口 Agent","execution_capabilities":["http_smoke"]},
+    {"id":"database","name":"数据库 Agent","execution_capabilities":["database_restart"]},
+    {"id":"mcu","name":"MCU 固件 Agent","execution_capabilities":["firmware_build","device_io"]},
+    {"id":"mpu","name":"MPU 系统 Agent","execution_capabilities":["embedded_linux_build","device_io"]},
+    {"id":"protocol","name":"驱动与协议 Agent","execution_capabilities":["protocol_io"]},
+    {"id":"integration","name":"集成协作 Agent","execution_capabilities":["integration_gates"]}
+  ]
+}

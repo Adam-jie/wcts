@@ -1,0 +1,7 @@
+{
+  "device": {"kind": "serial", "name": "串口传输回环模拟", "port": "loop://", "baudrate": 115200},
+  "requirements": [{"id": "serial-link", "description": "验证文本帧可发送并完整回读", "expected": "回读 PING 换行；仅检验传输回环", "category": "communication"}],
+  "allowed_actions": [{"kind": "serial", "id": "echo-frame", "function_id": "serial-link", "description": "发送 PING 文本帧并核对完整回显", "write_text": "PING\n", "read_until": "\n", "timeout_s": 5,
+    "assertions": [{"kind": "text_equals", "expected": "PING\n"}]}],
+  "plan": {"steps": [{"id": "step-01", "function_id": "serial-link", "action_id": "echo-frame", "assertions": [{"kind": "text_equals", "expected": "PING\n"}]}]}
+}

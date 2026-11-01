@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b111c" />
+  <title>CodeAgent 总控工作台 · TestFix</title>
+  <link rel="stylesheet" href="/static/fea/fea.css" />
+  <script type="module" src="/static/fea/fea.js"></script>
+  <link rel="stylesheet" href="/static/theme.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">跳到三维工作台</a>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/lab"><span class="brand-icon">t<span>f</span></span><span>TestFix</span></a>
+      <div class="workspace-label"><span class="live-dot"></span> CodeAgent 工程工作台</div>
+      <nav class="workspace-links" aria-label="工作台"><a href="/">返回首页</a><a href="/implementation">补全与修改</a><a href="/engineering/flow">节点连线工作台</a><a href="/hardware">硬件测试</a><a class="back-link" href="/lab">协作空间</a></nav>
+    </header>
+    <section class="mission-bar" aria-labelledby="hero-title">
+      <div class="mission-title"><h1 id="hero-title">SQLGlot 功能补全</h1><p>补充 <code>sort_by()</code> 与 <code>cluster_by()</code></p></div>
+      <div class="metrics" aria-label="真实实验验证结果">
+        <div class="metric"><span>生成测试</span><strong id="metric-generated">—<small>/ 9</small></strong></div>
+        <div class="metric"><span>独立验收</span><strong id="metric-independent">—<small>/ 1</small></strong></div>
+        <div class="metric"><span>原项目回归</span><strong id="metric-regression">—<small>/ 140</small></strong></div>
+        <div class="metric"><span>安装后 API</span><strong id="metric-installed">—<small>/ 3</small></strong></div>
+      </div>
+      <button class="mission-info" type="button" data-evidence="overview" aria-haspopup="dialog">了解这次任务 <span aria-hidden="true">↗</span></button>
+    </section>
+    <main class="workspace" id="workspace">
+      <div id="page-error" class="notice error global-error" role="alert" hidden></div>
+      <section class="world-stage" aria-labelledby="world-title">
+        <header class="workbench-header"><div><h2 id="world-title">CodeAgent <span>总控工作台</span></h2></div><button id="codeagent-home" type="button" class="manager-button">查看总控 <span aria-hidden="true">↗</span></button></header>
+        <div class="scene-toolbar"><span class="scene-mode" id="scene-mode" role="status">正在加载三维工作台…</span><div class="scene-tools" aria-label="三维视角控制"><button id="scene-reset" type="button" title="恢复整体视角" aria-label="恢复整体视角">⌂</button><button id="scene-focus" type="button" title="聚焦当前岗位" aria-label="聚焦当前岗位">⌖</button><span></span><button id="scene-zoom-in" type="button" title="拉近" aria-label="拉近">＋</button><button id="scene-zoom-out" type="button" title="拉远" aria-label="拉远">−</button></div></div>
+        <div class="scene-viewport"><div id="fea-scene" class="fea-scene" aria-label="CodeAgent总控居中、八个职责岗位有序排列的可交互三维工作台"></div></div>
+        <div class="scene-help"><span>拖动旋转 · Ctrl + 滚轮缩放 · 双击聚焦</span><button id="show-inspector" type="button" aria-controls="stage-panel">查看所选产物 ↓</button></div>
+      </section>
+      <aside class="stage-panel panel" id="stage-panel" aria-labelledby="stage-title"><div class="inspector-label"><span>岗位产物</span></div><div class="stage-panel-top"><span id="stage-number" class="eyebrow"></span><span id="stage-type" class="tag">继承规划</span></div><h3 id="stage-title">CodeAgent 总控</h3><p id="stage-summary">正在读取原始规划与真实交接记录…</p><div id="stage-readable" class="stage-readable"></div><button class="button inspect-action" type="button" id="stage-evidence" data-evidence="overview">打开相关证据 <span aria-hidden="true">↗</span></button><details class="artifact-details"><summary>原始产物</summary><pre id="stage-artifact" class="code-block" tabindex="0"></pre><p id="stage-artifact-path" class="hash"></p></details><details class="inspector-footnote"><summary>记录详情</summary><p>这是已完成的串行 Skill 实验。沿用原规划，宿主依据失败证据续跑修复与评审，没有新增规划模型调用。</p></details></aside>
+      <section class="role-selector panel" aria-labelledby="roles-title"><header><div><h2 id="roles-title">总控 + 8 个职责岗位</h2></div><p>点击岗位，查看它完成的工作。</p></header><div class="flow-grid" id="flow-grid" aria-label="CodeAgent与八个职责岗位"></div></section>
+    </main>
+    <footer class="evidence-dock"><div class="dock-caption"><span class="live-dot"></span><span>补全结果已验证<small>原版 1/9 → 旧候选 2/9 → 最终 9/9</small></span></div><nav aria-label="查看证据和现场操作"><button type="button" data-evidence="tests">测试设计</button><button type="button" data-evidence="patch">真实补丁</button><button type="button" data-evidence="runtime">运行程序 </button><button class="dock-primary" type="button" data-evidence="retest">现场复测 </button></nav></footer>
+  </div>
+  <dialog id="evidence-dialog" class="evidence-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><div><h2 id="dialog-title">测试设计与执行</h2></div><button id="close-evidence" class="close-button" type="button" aria-label="关闭证据面板">×</button></div>
+    <nav class="evidence-tabs" aria-label="证据分类"><button type="button" data-evidence="overview">任务与范围</button><button type="button" data-evidence="tests">测试设计</button><button type="button" data-evidence="patch">代码补丁</button><button type="button" data-evidence="runtime">运行程序</button><button type="button" data-evidence="retest">现场复测</button></nav>
+    <div class="dialog-content" id="dialog-content">
+      <div class="evidence-page" data-page="overview" hidden><section class="overview-intro panel" id="requirement"><div class="eyebrow">真实开源任务 · SQLGLOT #415</div><h2>把一句功能需求，交付成能运行的 Python 库。</h2><p>SQLGlot 是 Python SQL 解析与构建库。仓库已有 SORT、CLUSTER 语法，本次补齐对应链式构建 API。运行效果是生成 SQL 字符串，不连接数据库、不执行查询。</p><a class="text-link" href="https://github.com/tobymao/sqlglot/pull/415" target="_blank" rel="noopener noreferrer">GitHub 原始任务 ↗</a><details><summary>原始需求与固定代码版本</summary><p id="requirement-original" class="original-copy">正在读取…</p><p id="requirement-revision" class="hash"></p></details><div class="overview-history"><strong>真实失败，也保留在记录里。</strong><p>第一版新增了两个方法，却漏注册解析器。测试暴露缺口，模型诊断与审查要求返工；补齐注册后，使用原来的冻结测试重新验证。</p></div></section>
+      <section class="evidence-note panel" aria-labelledby="evidence-title"><div><span class="eyebrow">可复核的边界</span><h2 id="evidence-title">看得见产物，也说清实验范围。</h2><p>当前完成固定 10 项任务中的 SQLGlot 1 项。页面流程展示已完成的真实 LLM 记录；现场操作不会模拟新的模型协作。</p></div><details><summary>模型调用、完整性与实验范围</summary><dl id="provenance" class="provenance"></dl><ul id="experiment-limits" class="limits"></ul></details></section>
+</div>
+<div class="evidence-page" data-page="tests" hidden>
+      <section class="section" id="test-design" aria-labelledby="tests-title">
+        <div class="section-heading"><div><div class="eyebrow">测试设计</div><h2 id="tests-title">把一句功能需求，变成能执行的断言。</h2><p>模型负责设计步骤与 pytest 用例；框架负责冻结、执行、核对版本、记录结果。</p></div><a class="text-link" href="#retest">重新跑这些测试 ↗</a></div>
+        <div class="testing-split">
+          <article class="panel steps-card"><h3>测试执行的六个步骤</h3><ol id="test-steps" class="test-steps"></ol><details><summary>查看 LLM 输出的原始步骤</summary><pre id="original-steps" class="code-block" tabindex="0"></pre></details></article>
+          <article class="panel assertion-card"><span class="eyebrow">一个实际的测试</span><h3>不只检查“能运行”，还检查输出对不对。</h3><pre class="code-block example-code"><code>query = sqlglot.select("x").from_("tbl")
+query = query.sort_by("x DESC")
+
+assert isinstance(query.args["sort"], exp.Sort)
+assert query.sql() == \
+    "SELECT x FROM tbl SORT BY x DESC"</code></pre><div class="assertion-caption"><span class="check-icon">✓</span><p>同时验证表达式结构和准确的 SQL 字符串。仅“没有报错”不会被算作通过。</p></div><div class="freeze-note"><strong>先冻结测试，再修改代码。</strong><p>补全 Agent 不能通过删测试、改预期结果来制造成功。</p><p id="tests-sha" class="hash">正在读取测试指纹…</p></div></article>
+        </div>
+        <div class="table-panel panel"><div class="table-heading"><h3>9 个真实用例，覆盖不同使用方式</h3><span>同一份测试 · 三个版本</span></div><div class="table-scroll"><table><thead><tr><th scope="col">验证内容</th><th scope="col">原始版本</th><th scope="col">旧失败候选</th><th scope="col">最终版本</th></tr></thead><tbody id="test-cases"></tbody></table></div><details class="source-details"><summary>查看冻结的 pytest 完整源代码</summary><pre id="test-source" class="code-block" tabindex="0"></pre></details></div>
+      </section>
+</div>
+<div class="evidence-page" data-page="patch" hidden>
+      <section class="section" id="patch" aria-labelledby="patch-title">
+        <div class="section-heading"><div><div class="eyebrow">代码修复</div><h2 id="patch-title">方法要有，解析器也必须接通。</h2><p>新增 API 和解析器注册共同完成调用链。下面是实际代码差异，不是示意补丁。</p></div></div>
+        <div class="patch-explanation"><article class="panel problem-card"><span class="tag error-tag">旧候选为何失败</span><h3>调用找得到，字符串却解析不了</h3><p>新增方法传入 <code>Sort / Cluster</code>，解析分派表缺少对应注册。因此字符串参数触发 <code>TypeError: No parser registered</code>。</p></article><article class="panel solution-card"><span class="tag">LLM 返工后的修复</span><h3>复用现有语法，补齐两项注册</h3><p>将表达式映射到已有 <code>_parse_sort()</code>。保留原有解析行为，并用同一套生成测试、独立验收和回归测试复测。</p></article></div>
+        <details class="patch-details panel" open><summary>查看完整补丁 <span id="patch-files" class="hash"></span></summary><pre id="patch-source" class="code-block patch-code" tabindex="0">正在读取真实补丁…</pre></details>
+      </section>
+</div>
+<div class="evidence-page" data-page="runtime" hidden>
+      <section class="section" id="runtime" aria-labelledby="runtime-title">
+        <div class="section-heading"><div><div class="eyebrow">运行程序</div><h2 id="runtime-title">你输入参数，它真的构建一条 SQL。</h2><p>SQLGlot 是库程序，运行效果是返回 SQL 字符串。本实验不连接数据库，不执行查询。</p></div><span class="status-pill live-pill">本机真实 Python 子进程</span></div>
+        <div class="runtime-layout"><form id="probe-form" class="panel probe-form"><h3>定义这次调用</h3><label for="probe-operation">调用功能<select id="probe-operation" name="operation"><option value="sort_by">sort_by() · 新增排序子句</option><option value="cluster_by">cluster_by() · 新增聚簇子句</option><option value="order_by">order_by() · 原有排序功能</option></select></label><div class="field-row"><label for="probe-table">表名<input id="probe-table" name="table" value="tbl" maxlength="80" required autocomplete="off" spellcheck="false" /></label><label for="probe-columns">查询列<input id="probe-columns" name="columns" value="a" maxlength="150" required autocomplete="off" spellcheck="false" /></label></div><label for="probe-clauses">排序 / 聚簇字段<input id="probe-clauses" name="clauses" value="a DESC" maxlength="150" required autocomplete="off" spellcheck="false" /></label><p class="field-help">多个字段用逗号分隔；支持普通标识符与 ASC / DESC。</p><button id="probe-submit" class="button primary" type="submit" disabled>运行这个 Python 调用 <span aria-hidden="true">→</span></button><p class="field-help">同时运行原版、旧失败版、最终安装版，比较真实输出。</p></form>
+        <article class="panel runtime-console"><div class="console-header"><span><span class="terminal-dot green"></span> Python → SQL</span><span id="probe-state" role="status">等待你运行</span></div><p class="console-caption">将执行的调用</p><pre id="probe-code" class="code-block">import sqlglot
+sqlglot.select("a").from_("tbl").sort_by("a DESC").sql()</pre><div id="probe-results" class="probe-results" aria-live="polite"><p class="empty-state">修改左侧参数，点击「运行这个 Python 调用」。<br />这里将显示三个版本的实际 SQL 或异常。</p></div><p id="probe-time" class="hash"></p><div id="probe-error" class="notice error" role="alert" hidden></div></article></div>
+      </section>
+</div>
+<div class="evidence-page" data-page="retest" hidden>
+      <section class="section" id="retest" aria-labelledby="retest-title">
+        <div class="retest-card panel"><div><div class="eyebrow">现场验证</div><h2 id="retest-title">让本机重新跑一遍，结果由测试给出。</h2><p>重新执行冻结的 9 项功能测试和 140 项原项目回归，核对源码与测试指纹。使用已完成的候选代码，不调用 LLM。</p><button id="retest-submit" class="button primary" type="button" disabled>重新执行冻结测试 <span aria-hidden="true">↻</span></button><p class="field-help">运行期间请等待，通常需要十几秒。结果会保存在新的运行记录中。</p></div><div class="retest-output" aria-live="polite"><span id="retest-state" class="tag neutral-tag">尚未现场重测</span><div id="retest-results"><p class="empty-state">历史结果已通过。点击左侧按钮，查看这次执行的真实结果。</p></div><p id="retest-time" class="hash"></p><div id="retest-error" class="notice error" role="alert" hidden></div></div></div>
+      </section>
+</div>
+
+    </div>
+  </dialog>
+</body>
+</html>

@@ -190,7 +190,8 @@
       $("version-label").textContent = "TestFix-Agent " + (state.health.version || "");
       $("footer-version").textContent = state.health.version ? "v" + state.health.version : "LOCAL WORKSPACE";
       const agentarts = state.health.providers?.find((item) => item.id === "agentarts");
-      $("agentarts-description").textContent = agentarts?.configured ? "AgentArts 接口已配置。选择华为 AgentArts 模式后，以真实运行日志和测试结果验证接入。" : "AgentArts 接口尚未配置。当前本地流程可验证工程，不能据此宣称已完成赛题平台接入。";
+      $("agentarts-description").textContent = agentarts?.configured ? "本地已配置 Runtime 地址。点击检查云端接口、模型和 Skill 版本。" : "尚未配置 AgentArts Runtime 地址和凭据；本地运行不代表云端已部署。";
+      $("agentarts-check-button").disabled = !agentarts?.configured;
       updateConfiguration();
     } else {
       state.health = null;
@@ -625,6 +626,17 @@
     updateProjectConfiguration();
   });
   $("project-provider-select").addEventListener("change", updateProjectConfiguration);
+  $("agentarts-check-button").addEventListener("click", async () => {
+    const button = $("agentarts-check-button");
+    button.disabled = true;
+    $("agentarts-description").textContent = "正在检查 AgentArts Runtime…";
+    try {
+      const result = await api("/api/agentarts/check", {method:"POST"});
+      $("agentarts-description").textContent = "云端 Runtime 已响应 · 模型 " + result.model + " · Skill 版本一致。此检查未调用模型或执行测试。";
+    } catch (error) {
+      $("agentarts-description").textContent = "云端检查未通过：" + error.message;
+    } finally { button.disabled = false; }
+  });
   $("project-start-button").addEventListener("click", startProjectRun);
   for (const id of ["project-wall-minutes","project-token-limit","project-model-slots","project-cpu-slots"]) $(id).addEventListener("input", updateProjectStartButton);
   $("provider-select").addEventListener("change", updateConfiguration);

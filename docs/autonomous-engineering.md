@@ -1,7 +1,5 @@
 # 九能力自主工程补全
 
-公开版说明：本文中历史 run-id 与 `artifacts/` 路径用于说明本地证据组织方式；这些原始运行产物、模型 captures 及机器相关文件不随公开源码分发。当前源码从固定上游 fixture 发起新运行并产生新的证据。
-
 完整工程入口已经连接真实模型传输、OR-Tools CP-SAT 整数调度、受控补丁工具和确定性验收。当前注册并验证的业务适配器是 Flaskr；函数任务、历史会话结果评测仍保留各自入口。
 
 默认使用本机已登录 Codex CLI 的 ChatGPT OAuth 登录态，请求模型为 `gpt-5.6-sol`。工程不复制 OAuth 凭据，也不要求为这个入口另建 API Key。登录可用只代表具备调用条件；实际推理、失败和用量应查看本次运行的模型轨迹。AgentArts 云端尚未部署，已有客户端/适配器 mock 测试不构成云上运行证据。
@@ -108,7 +106,7 @@ token 预测来自公开输入 UTF-8 字节数约除以 3、配置的每次 1200
 
 网页通过 `GET /api/runs/<run-id>` 查看状态，通过 `GET /api/runs/<run-id>/report?format=json` 下载报告，通过 `GET /api/project-runs/<run-id>/download` 下载已完成工程。下载接口复核归档哈希，失败、拒绝或预算耗尽的运行不提供成功交付包。
 
-请求模型名和服务回报模型名分别记录。如果 CLI 只确认了请求参数而未回报实际模型，轨迹使用 `requested_cli_flag_only`；不会补写服务确认。历史会话 captures 与复验 manifests 不随公开源码发布；当前入口从原始 fixture 创建新的自主运行。
+请求模型名和服务回报模型名分别记录。如果 CLI 只确认了请求参数而未回报实际模型，轨迹使用 `requested_cli_flag_only`；不会补写服务确认。原有 `experiments/flaskr/manifest.json` 与 `experiments/gpt56/bundle.json` 是历史会话结果的复验入口，不属于本次新自主运行的成绩。
 
 ## 本次真实运行记录
 

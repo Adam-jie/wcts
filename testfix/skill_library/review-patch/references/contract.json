@@ -1,14 +1,15 @@
 {
   "schema_version": "testfix.skill.v1",
   "id": "review-patch",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "kind": "llm",
   "role": "reviewer",
   "paper_capability": "none",
   "profiles": [
     "pure_python",
     "flaskr_project",
-    "python_package"
+    "python_package",
+    "python_application"
   ],
   "inputs": [
     "requirement_matrix",

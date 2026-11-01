@@ -276,6 +276,7 @@ def project_run(settings, run):
 
 
 def bootstrap(settings, runs):
+    from .config import DEFAULT_CODEX_MODEL
     from .project_models import project_provider_status
     from .project_tools import project_catalog
     from .project_workflow import default_budget
@@ -293,7 +294,7 @@ def bootstrap(settings, runs):
     index = sorted(runs, key=lambda item: item.get('created_at', ''), reverse=True)
     return {'projects': projects, 'providers': project_provider_status(settings),
         'defaults': {'project_id': 'Project/rich-cli' if any(x['id'] == 'Project/rich-cli' for x in projects) else 'Project/flaskr',
-            'provider': 'codex_cli', 'model': 'gpt-5.6-sol', 'max_rounds': 2,
+            'provider': 'codex_cli', 'model': DEFAULT_CODEX_MODEL, 'max_rounds': 2,
             'budget': {'wall_seconds': 7200, 'token_limit': 1_000_000, 'model_slots': 2, 'cpu_slots': 2},
             'run_id': next((item['id'] for item in index if item.get('project_id') == 'Project/rich-cli'
                            and item.get('status') == 'completed' and item.get('collaboration')), None)},

@@ -13,16 +13,17 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from . import __version__
-from .config import Settings, load_settings
+from .config import CODEX_PROJECT_MODELS, DEFAULT_CODEX_MODEL, Settings, load_settings
 from .orchestrator import execute_run
 from .reports import now, save_run
 from .runner import docker_available
 from .tasks import catalog, select_tasks
+from .fea_lab import FEAProbeRequest
 
 
 def _owner_alive(identifier) -> bool:
@@ -60,20 +61,41 @@ class RunRequest(BaseModel):
 
 
 class ProjectBudgetRequest(BaseModel):
-    wall_seconds: int = Field(default=4500, ge=60, le=7200)
-    token_limit: int = Field(default=800000, ge=5000, le=2000000)
+    wall_seconds: int = Field(default=4500, ge=60)
+    token_limit: int = Field(default=800000, ge=5000)
     model_slots: int = Field(default=1, ge=1, le=8)
     cpu_slots: int = Field(default=2, ge=1, le=8)
 
 
+class ProjectSearchRequest(BaseModel):
+    mode: str = 'forest'
+    trees: int = Field(default=3, ge=1)
+    iterations: int = Field(default=6, ge=1)
+    width: int = Field(default=2, ge=1)
+    depth: int = Field(default=3, ge=1)
+    exploration: float = Field(default=1.4142135623730951, ge=0, allow_inf_nan=False)
+    min_successes: int = Field(default=3, ge=1)
+    quality_attempts: int = Field(default=6, ge=1)
+
+    @field_validator('mode')
+    @classmethod
+    def search_mode(cls, value):
+        if value not in {'mcts','forest'}:
+            raise ValueError('Search mode must be mcts or forest')
+        return value
+
+
 class ProjectRunRequest(BaseModel):
     project_id: str = "Project/flaskr"
+    intake_id: str | None = Field(default=None, pattern='^[a-f0-9]{32}$')
+    intake_revision: int | None = Field(default=None, ge=0)
     provider: str = "codex_cli"
-    model: str = "gpt-5.6-sol"
+    model: str = Field(default=DEFAULT_CODEX_MODEL, min_length=1, max_length=160)
     max_rounds: int = Field(default=2, ge=1, le=5)
     budget: ProjectBudgetRequest = Field(default_factory=ProjectBudgetRequest)
     strategy: str = "balanced"
     collaboration_request: str | None = Field(default=None, max_length=20_000)
+    search: ProjectSearchRequest | None = None
 
     @field_validator('collaboration_request')
     @classmethod
@@ -183,16 +205,36 @@ class RunStore:
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    # Initialize the numerical backend before serving requests. On Windows a
+    # first NumPy/OR-Tools import in a worker can hold the native loader lock
+    # while AnyIO's event-loop thread waits for another worker to start.
+    # Eager initialization keeps that DLL load out of concurrent HTTP workers.
+    from . import scheduling  # noqa: F401
+
     settings = settings or load_settings()
     app = FastAPI(title="TestFix-Agent", version=__version__)
     store = RunStore(settings)
     app.state.store = store
+    from .application_preview import attach_application_previews
+    attach_application_previews(app, settings, store)
+    from .wctp_workbench import attach_wctp_tests
+    attach_wctp_tests(app, settings, store)
+    from .feature_testing import attach_feature_tests
+    attach_feature_tests(app, settings, store)
     probe_lock = threading.Lock()
     # Windows registry can associate .js with text/plain; nosniff then blocks it.
     mimetypes.init()
     mimetypes.add_type("text/javascript", ".js")
     mimetypes.add_type("text/css", ".css")
     app.mount("/static", StaticFiles(directory=settings.root / "web"), name="static")
+    from .hardware import create_hardware_router
+    from .hardware_planner import create_hardware_planner_router, planning_provenance
+    app.include_router(create_hardware_router(settings, lambda request: planning_provenance(settings, request)))
+    app.include_router(create_hardware_planner_router(settings))
+    from .web_live import create_web_live_router
+    app.include_router(create_web_live_router(settings.root))
+    from .intake import create_intake_router
+    app.include_router(create_intake_router(settings))
 
     @app.middleware("http")
     async def local_origin_guard(request: Request, call_next):
@@ -210,6 +252,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
         response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+        if request.url.path == '/web-testing':
+            response.headers['Content-Security-Policy'] += "; frame-src http://127.0.0.1:8770 http://127.0.0.1:8771 http://127.0.0.1:8772 http://127.0.0.1:8773"
+        nonce = getattr(request.state, 'style_nonce', None)
+        if nonce:
+            response.headers['Content-Security-Policy'] = response.headers['Content-Security-Policy'].replace(
+                "style-src 'self'", "style-src 'self' 'nonce-" + nonce + "'")
         return response
 
     @app.get("/")
@@ -219,6 +267,68 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get('/lab')
     def visual_lab():
         return FileResponse(settings.root/'web/lab/index.html')
+
+    @app.get('/explorer')
+    def architecture_explorer():
+        return FileResponse(settings.root/'web/explorer/index.html')
+
+    @app.get('/engineering')
+    def engineering_workbench(request: Request):
+        if not request.query_params.get('run'):
+            return RedirectResponse('/implementation', status_code=307)
+        from .frontend import engineering_document
+        return engineering_document(settings.root, request)
+
+    @app.get('/engineering/flow')
+    def engineering_flow(request: Request):
+        from .frontend import engineering_document
+        return engineering_document(settings.root, request)
+
+    @app.get('/fea')
+    def fea_visual_lab():
+        return FileResponse(settings.root/'web/fea/index.html')
+
+    @app.get('/hardware')
+    def hardware_lab(request: Request):
+        from .frontend import hardware_document
+        return hardware_document(settings.root, request)
+
+    @app.get('/web-testing')
+    def web_testing_lab(request: Request):
+        from .frontend import web_testing_document
+        return web_testing_document(settings.root, request)
+
+    @app.get('/api/fea/demo')
+    def fea_visual_demo():
+        from .fea_lab import demo
+        try:
+            return demo(settings)
+        except (OSError, ValueError, KeyError) as exc:
+            raise HTTPException(409, 'Fixed SQLGlot evidence unavailable: ' + str(exc)) from None
+
+    @app.post('/api/fea/probe')
+    def fea_visual_probe(body: FEAProbeRequest):
+        from .fea_lab import probe
+        if not probe_lock.acquire(blocking=False):
+            raise HTTPException(429, 'A local probe or retest is already running')
+        try:
+            return probe(settings, body)
+        except (OSError, ValueError, KeyError) as exc:
+            raise HTTPException(409, str(exc)) from None
+        finally:
+            probe_lock.release()
+
+    @app.post('/api/fea/retest')
+    def fea_visual_retest():
+        from .fea_lab import retest
+        if not probe_lock.acquire(blocking=False):
+            raise HTTPException(429, 'A local probe or retest is already running')
+        try:
+            return retest(settings)
+        except (OSError, ValueError, KeyError) as exc:
+            raise HTTPException(409, str(exc)) from None
+        finally:
+            probe_lock.release()
 
     @app.get('/api/lab/bootstrap')
     def lab_bootstrap():
@@ -269,6 +379,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok", "version": __version__, "providers": settings.providers(), "docker_available": docker_available(),
                 "default_provider": settings.provider, "default_runner": settings.runner}
 
+    @app.post("/api/agentarts/check")
+    def agentarts_check():
+        from .agentarts_probe import check_runtime
+        from .project_models import ProjectModelError
+        try:
+            return check_runtime(settings)
+        except ProjectModelError as exc:
+            raise HTTPException(502, {"code": exc.code, "message": str(exc)}) from None
+
     @app.get("/api/tasks")
     def tasks():
         try:
@@ -286,30 +405,82 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return {"projects":[{**{key:item[key] for key in ("id","title","source","adapter")},
                                  "default_budget":default_budget(item['adapter'])} for item in values],
                     "providers":project_provider_status(settings),
-                    "defaults":{"project_id":"Project/flaskr","provider":"codex_cli","model":"gpt-5.6-sol",
+                    "defaults":{"project_id":values[0]['id'] if values else None,"provider":"codex_cli","model":DEFAULT_CODEX_MODEL,
                                 "max_rounds":2,"budget":DEFAULT_BUDGET,"strategy":"balanced"}}
         except (ValueError,OSError) as exc:
             raise HTTPException(400,str(exc)) from None
 
+    @app.get('/implementation')
+    def implementation_page():
+        return FileResponse(settings.root / 'web/implementation/index.html')
+
+    @app.get('/api/implementation-projects/{project_id:path}')
+    def implementation_project(project_id: str):
+        from .project_tools import get_project
+        try:
+            project = get_project(settings, project_id)
+            return {key: project.get(key) for key in ('id', 'title', 'adapter', 'requirements', 'clarifications',
+                'public_runtime', 'intake_id', 'intake_revision')}
+        except (ValueError, OSError): raise HTTPException(404, '工程不存在或材料不完整') from None
+
+    @app.get('/api/project-runs/{run_id}/patch')
+    def project_patch(run_id: str):
+        run = store.snapshot(run_id)
+        if run.get('kind') != 'autonomous_project' or not re.fullmatch('[a-f0-9]{32}', run_id):
+            raise HTTPException(404, '工程运行不存在')
+        patch = settings.artifacts / run_id / 'patch.diff'
+        # A running task may already have applied a candidate but not reached final reporting.
+        if patch.is_file(): return {'diff': patch.read_text(encoding='utf-8')}
+        from .project_tools import get_project
+        from .project_eval import _diff
+        candidate = settings.artifacts / run_id / 'workspace/candidate'
+        baseline = settings.artifacts / run_id / 'workspace/baseline'
+        if candidate.is_dir() and baseline.is_dir():
+            project = get_project(settings, run['project_id'])
+            return {'diff': _diff(baseline, candidate, set(project['allowed_changes'])), 'final': False}
+        return {'diff': ''}
+
+    @app.get('/api/project-specialists')
+    def project_specialists(project_id: str = Query(default='Project/flaskr', max_length=160)):
+        from .specialists import preview_project
+        try:
+            return preview_project(settings, project_id)
+        except (ValueError, OSError) as exc:
+            raise HTTPException(400, str(exc)) from None
+
     @app.post("/api/project-runs",status_code=202)
     def submit_project(body: ProjectRunRequest):
-        from .project_models import project_provider_status
+        from .project_models import ProjectModelError, project_provider_status
         from .project_tools import get_project
         from .project_workflow import default_budget
         try:
             selected_project=get_project(settings,body.project_id)
-            if body.collaboration_request is not None and 'model_slots' not in body.budget.model_fields_set:
+            if selected_project.get('intake_id'):
+                from .intake import IntakeStore
+                task = IntakeStore(settings.root).read(selected_project['intake_id'])
+                if (body.intake_id != task['id'] or body.intake_revision != task.get('revision', 0)
+                        or body.intake_revision != selected_project['intake_revision']):
+                    raise ValueError('任务资料版本已变化，请重新选择项目后开始修改')
+            if (body.collaboration_request is not None or body.search) and 'model_slots' not in body.budget.model_fields_set:
                 body.budget.model_slots=2
+            if body.search and body.search.mode == 'mcts' and body.search.trees != 1:
+                raise ValueError('Single-tree MCTS requires trees=1')
             if 'wall_seconds' not in body.budget.model_fields_set:
-                body.budget.wall_seconds=(7200 if body.collaboration_request is not None else
+                body.budget.wall_seconds=(36000 if body.search else 7200 if body.collaboration_request is not None else
                                           default_budget(selected_project['adapter'])['wall_seconds'])
+            if body.search and 'token_limit' not in body.budget.model_fields_set:
+                body.budget.token_limit=4_000_000
             if body.strategy not in {"balanced","fast","thorough"}:
                 raise ValueError("Unknown strategy")
             if body.provider not in {item['id'] for item in project_provider_status(settings) if item['configured']}:
                 raise ValueError("Selected real model transport is not available; no replay fallback is permitted")
-            if body.provider=='codex_cli' and body.model!='gpt-5.6-sol':
-                raise ValueError("The registered experiment model is gpt-5.6-sol")
-        except (ValueError,OSError) as exc:
+            if body.provider == 'agentarts':
+                from .agentarts_probe import check_runtime
+                requested = body.model if 'model' in body.model_fields_set else None
+                body.model = check_runtime(settings, expected_model=requested)['model']
+            if body.provider == 'codex_cli' and body.model not in CODEX_PROJECT_MODELS:
+                raise ValueError('请选择受支持的 Codex 工程模型')
+        except (ValueError,OSError,ProjectModelError) as exc:
             raise HTTPException(400,str(exc)) from None
         return store.submit_project(body)
 
@@ -335,7 +506,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with store.lock:
             store.refresh_external_runs()
             values = sorted(store.runs.values(), key=lambda value: value["created_at"], reverse=True)
-            return {"runs": [{key: value.get(key) for key in ("id", "status", "created_at", "provider", "runner", "kind", "summary")} for value in values]}
+            return {"runs": [{key: value.get(key) for key in ("id", "status", "created_at", "provider", "runner", "kind", "summary", "project_id", "intake_id", "intake_revision")} for value in values]}
 
     @app.get("/api/project-runs/{run_id}/download")
     def project_download(run_id: str):

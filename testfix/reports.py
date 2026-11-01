@@ -17,6 +17,30 @@ def now() -> str:
 
 
 def markdown(run: dict) -> str:
+    if run.get('kind') == 'feature_test':
+        summary = run.get('summary', {})
+        edited = run.get('test_plan_source') == 'user_edited'
+        lines = ['# 按功能描述的自动化测试', '', f"运行：`{run['id']}`", f"状态：{run['status']}",
+                 f"工程：{run.get('project_title', run['project_id'])}", f"功能描述：{run['description']}",
+                 f"测试版本：{run.get('source_run_id') or '原始工程'}；源码 SHA-256：{run.get('candidate_sha256', '尚未冻结')}",
+                 f"测试计划：{'用户编辑；来源运行 ' + run['parent_feature_id'] if edited else '模型生成'}",
+                 f"实际模型调用：{len(run.get('model_calls', []))}；请求模型：{run['model']}",
+                 f"完成轮数：{summary.get('accepted', 0)}/{run['iterations']}；通过用例执行：{summary.get('passed', 0)}/{summary.get('tested', 0)}", '',
+                 ('逐操作测试使用本地真实 HTTP 和原有回归；不修改产品代码，不替代独立验收。实际执行器为原 WCTP。'
+                  if run.get('execution_mode') == 'operations' else
+                  '只执行本轮测试计划和既有回归；不修改产品代码，不替代独立验收。实际执行器为原 WCTP。'), '']
+        for step in run.get('test_plan', {}).get('steps', []):
+            location = f"{step['method']} {step['path']}" if run.get('execution_mode') == 'operations' else step['file']
+            lines.append(f"- {step['title']}：{step['expected']}（{location}）")
+        if edited:
+            lines.extend(['', '步骤预期为用户填写的说明；实际通过与否由执行时的断言决定。'])
+        lines.extend(['', run.get('error') or '', '逐步结果见同目录 wctp-feature/report.json；模型和工具原始回执见 model_calls 与 tool_calls。'])
+        return '\n'.join(lines)
+    if run.get('kind') == 'wctp_test':
+        return '\n'.join(['# WCTP 冻结版本循环测试', '', f"运行：`{run['id']}`", f"状态：{run['status']}",
+            f"来源运行：`{run['source_run_id']}`", f"完成轮数：{run.get('summary',{}).get('accepted',0)}/{run['iterations']}",
+            '执行用户提供的原 WCTP 图引擎；本轮不调用模型，不修改原验收成绩。',
+            '逐步回执和测试数据见同目录 wctp-repeat/report.json 与 tool_calls。', run.get('error') or ''])
     if run["provider"] == "replay":
         mode = "离线回放；以下结果仅证明工程流程，不能作为大模型性能"
     elif run["provider"] == "codex_session":
@@ -41,6 +65,17 @@ def markdown(run: dict) -> str:
         plan = run.get('plan',{})
         lines.extend(['','## 整数调度与实际执行','',f"求解状态：{plan.get('solver_status','尚未求解')}；最优只针对声明的资源与预算，不是功能通过证明。",
                       '', '```json',json.dumps(run.get('workflow',{}),ensure_ascii=False,indent=2),'```'])
+    if run.get('search_report'):
+        search = run['search_report']
+        lines.extend(['','## 候选搜索与公开测试评价','',
+                      f"算法：{search['algorithm']}；选定节点：{search.get('selected_id') or '尚未选定'}；独立验收参与搜索：否。",
+                      'UCT 数值来自冻结公开测试，不能代替最终独立验收；访问与回传不是模型自评。',
+                      '', '| 候选 | 父节点 | 树 | 深度 | 访问 | 公开评价 | 新测试 | 回归 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'])
+        for node in search['nodes']:
+            if not node.get('parent_id'):
+                continue
+            value = node.get('evaluation',{})
+            lines.append(f"| {node['id']} | {node['parent_id']} | {node['tree']+1} | {node['depth']} | {node['visits']} | {value.get('reward','未执行')} | {value.get('generated_passed','—')}/{value.get('generated_total','—')} | {value.get('regression_passed','—')}/{value.get('regression_total','—')} |")
     if run.get('collaboration'):
         team = run['collaboration']
         lines.extend(['','## 总控与员工协作','',f"用户需求：{team['request']}",
@@ -48,6 +83,12 @@ def markdown(run: dict) -> str:
                       '员工交接不等于验收通过；最终结果仍由冻结测试、评审、构建和实际运行检查决定。'])
         for revision in team['rounds']:
             lines.extend(['',f"第 {revision['round']} 轮："])
+            for assignment in revision.get('specialist_assignments', {}).values():
+                names = '、'.join(item['name'] for item in assignment['specialists']) or '通用探索'
+                lines.append(f"- 专业分工 {assignment['task_id']}：{names}；状态：{assignment['status']}。")
+                if assignment['missing_capabilities']:
+                    lines.append('  缺少执行能力：' + '、'.join(assignment['missing_capabilities']))
+                lines.append('  本任务无需加载：' + '、'.join(assignment['not_applicable']))
             if revision.get('batches'):
                 peak=max(batch.get('max_observed_concurrency',0) for batch in revision['batches'])
                 lines.append(f"WCTP 实际执行批次：{len(revision['batches'])}；观测到的最高并发：{peak}；源码哈希和线程时间段见 JSON。")

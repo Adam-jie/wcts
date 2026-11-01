@@ -1,0 +1,6 @@
+[project]
+name = "taskboard-upload-demo"
+version = "0.1.0"
+description = "A deliberately defective, locally runnable task management demo"
+requires-python = ">=3.11"
+dependencies = []

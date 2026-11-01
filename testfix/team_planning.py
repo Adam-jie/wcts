@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import math
+import os
 from pathlib import PurePosixPath, PureWindowsPath
 import re
 from typing import Any
@@ -18,7 +19,7 @@ import ortools
 from ortools.sat.python import cp_model
 
 
-MAX_WORK_ITEMS = 4
+MAX_WORK_ITEMS = 32
 DECLARED_TASK_SECONDS = 180
 DECLARED_TASK_TOKEN_CAP = 24_000
 _INTEGER_LIMIT = 2 ** 50
@@ -57,6 +58,19 @@ TEAM_PLAN_SCHEMA = _object({
                        "paths": _strings(nonempty=True),
                    })},
 })
+
+
+def work_item_limit():
+    value = os.environ.get('TESTFIX_MAX_WORK_ITEMS', str(MAX_WORK_ITEMS))
+    if not value.isdecimal() or not 1 <= int(value) <= 256:
+        raise TeamPlanError('TESTFIX_MAX_WORK_ITEMS must be an integer from 1 to 256')
+    return int(value)
+
+
+def team_plan_schema():
+    result = deepcopy(TEAM_PLAN_SCHEMA)
+    result['properties']['work_items']['maxItems'] = work_item_limit()
+    return result
 
 
 class TeamPlanError(ValueError):
@@ -121,8 +135,9 @@ def _graph(plan: Any) -> dict:
         raise TeamPlanError("Request is unsupported or unresolved; uncovered requests/questions must be resolved "
                             f"before execution: {assessment['uncovered_requests']!r}; {assessment['questions']!r}")
     items = plan["work_items"]
-    if not isinstance(items, list) or not 1 <= len(items) <= MAX_WORK_ITEMS:
-        raise TeamPlanError(f"work_items must contain 1–{MAX_WORK_ITEMS} tasks")
+    limit = work_item_limit()
+    if not isinstance(items, list) or not 1 <= len(items) <= limit:
+        raise TeamPlanError(f"work_items must contain 1–{limit} tasks")
     by_id = {}
     for item in items:
         _exact(item, {"id", "title", "skill_id", "requirement_ids", "depends_on", "paths"}, "work item")
@@ -264,7 +279,7 @@ def priority_ready(ids, plan_or_metrics: dict) -> list[str]:
     if (set(plan_or_metrics) == {"request_assessment", "work_items"}
             and isinstance(plan_or_metrics["work_items"], list)):
         metrics = graph_metrics(plan_or_metrics)
-    elif plan_or_metrics.get("schema_version") == "testfix.team-integer-plan.v1":
+    elif isinstance(plan_or_metrics.get('schema_version'),str) and plan_or_metrics['schema_version'] in {"testfix.team-integer-plan.v1","testfix.team-integer-plan.v2"}:
         metrics = plan_or_metrics.get("graph_metrics")
     else:
         metrics = plan_or_metrics

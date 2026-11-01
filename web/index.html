@@ -3,52 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#174b3f">
-  <title>TestFix-Agent · 测试驱动的功能补全</title>
+  <meta name="theme-color" content="#0b111c">
+  <meta name="color-scheme" content="dark">
+  <title>无遁 TestFix · 工程验证工作台</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/console.css">
   <script src="/static/app.js" defer></script>
+  <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body>
   <aside class="sidebar">
-    <a class="brand" href="/" aria-label="TestFix-Agent 首页"><span class="brand-mark">tf<span>↗</span></span><span>TestFix<span class="brand-secondary">AGENT WORKSPACE</span></span></a>
-    <div class="workspace-label"><span class="dot"></span> LOCAL WORKSPACE</div>
+    <a class="brand" href="/" aria-label="无遁 TestFix 首页"><svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><path d="m18 3 13 7.5v15L18 33 5 25.5v-15Z"/><path d="m5 10.5 13 7.8 13-7.8M18 18v15M18 3v8M5 25.5l7-4M31 25.5l-7-4"/><circle cx="18" cy="18" r="4"/></svg><span>无遁<span class="brand-secondary">TESTFIX AGENT</span></span></a>
+    <div class="workspace-label">工作空间 <span>WORKSPACE</span></div>
     <nav aria-label="工作台导航">
-      <a class="nav-item" href="/lab"><span>◇</span> 3D 实验室 <span class="nav-arrow">↗</span></a>
-      <a class="nav-item active" href="#workspace"><span>◫</span> 验证工作台 <span class="nav-arrow">↗</span></a>
+      <a class="nav-item" href="/tasks"><span>▤</span> 任务中心</a>
+      <a class="nav-item" href="/intake"><span>＋</span> 创建任务</a>
+      <a class="nav-item active" href="#workspace" aria-current="page"><span>◫</span> 验证工作台 <span class="nav-arrow">01</span></a>
+      <a class="nav-item" href="/implementation"><span>⌘</span> 补全与修改</a>
+      <a class="nav-item" href="/fea"><span>◈</span> CodeAgent 3D 工作台</a>
+      <a class="nav-item" href="/lab"><span>◇</span> 3D 流程实验室</a>
+      <a class="nav-item" href="/explorer"><span>◈</span> 3D 系统拆解</a>
+      <a class="nav-item" href="/hardware"><span>⌁</span> 硬件自动化测试</a>
+      <a class="nav-item" href="/web-testing"><span>↗</span> 网页产品验证</a>
+      <div class="nav-group-label">运行与交付</div>
       <a class="nav-item" href="#project-workspace"><span>⌘</span> 完整工程</a>
       <a class="nav-item" href="#history"><span>◷</span> 运行记录</a>
+      <a class="nav-item" href="/static/rich-cli-demo/index.html"><span>↗</span> 实际运行效果</a>
       <a class="nav-item" href="#sources"><span>⌘</span> 数据与边界</a>
     </nav>
-    <div class="sidebar-note"><div class="mini-label">OUR PRINCIPLE</div><p>先发现缺口。<br>再完成补全。<br>用独立测试证明。</p><span class="note-line"></span></div>
+    <a class="sidebar-model" href="/explorer"><span class="mini-label">SYSTEM EXPLORER</span><strong>进入三维架构 <span>↗</span></strong><span class="sidebar-model-graphic" aria-hidden="true"><i></i><i></i><i></i></span></a>
     <div class="sidebar-footer"><span id="connection-dot" class="connection-dot"></span><div><strong id="connection-label">连接本地服务…</strong><small id="version-label">TestFix-Agent</small></div></div>
   </aside>
 
   <main id="workspace">
-    <header class="topbar"><div class="breadcrumb">工作空间 <span>/</span> <strong>验证工作台</strong></div><div class="topbar-right"><span class="local-pill"><span class="dot"></span> 本地部署</span><button id="refresh-button" class="icon-button" title="刷新配置与运行记录" aria-label="刷新配置与运行记录">↻</button></div></header>
-    <section class="hero"><div><div class="eyebrow">TEST-DRIVEN FEATURE COMPLETION</div><h1>让每一次补全，<br class="mobile-break">都有测试证据<span>。</span></h1><p>多 Agent 发现功能缺口、生成补丁，再通过独立验收与原有回归。</p></div><div class="hero-seal"><span>ANALYZE</span><span class="seal-plus">+</span><span>REPAIR</span><span class="seal-plus">+</span><span>VERIFY</span></div></section>
+    <header class="topbar"><div class="breadcrumb">工作空间 <span>/</span> <strong>工程验证</strong></div><div class="topbar-right"><span class="local-pill"><span class="dot"></span> 本地工作空间</span><button id="refresh-button" class="icon-button" title="刷新配置与运行记录" aria-label="刷新配置与运行记录">↻</button></div></header>
+    <nav class="workspace-shortcuts" aria-label="切换工作台"><a href="/implementation">补全与修改</a><a href="/engineering/flow">节点连线工作台</a><a href="/fea">CodeAgent 3D 工作台</a><a href="/lab">3D 流程实验室</a><a href="/explorer">3D 系统拆解</a><a href="/hardware">硬件自动化测试</a><a href="/web-testing">网页产品验证</a></nav>
+    <section class="hero"><div><div class="eyebrow"><span></span> ENGINEERING CONSOLE</div><h1>工程补全<span>，</span>验证每一步。</h1><p>从功能缺口到可运行工程，让每一次修改都有测试证据。</p></div><a class="hero-link" href="/intake">创建任务 <span>＋</span></a></section>
+    <nav class="pipeline" aria-label="三大核心模块">
+      <a class="pipeline-node" href="/explorer"><span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"/></svg></span><span><small>01 / ORCHESTRATE</small><strong>CodeAgent 主控</strong><em>理解需求 · 规划与分配</em></span><b aria-hidden="true">↗</b></a>
+      <span class="pipeline-connector" aria-hidden="true"><i></i>→</span>
+      <a class="pipeline-node" href="/engineering"><span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 8 3 12l4 4m10-8 4 4-4 4m-4-10-2 16"/><circle cx="4" cy="3" r="1"/><circle cx="20" cy="21" r="1"/></svg></span><span><small>02 / BUILD</small><strong>多 Agent 生成与补全</strong><em>专业分工 · 协作实现</em></span><b aria-hidden="true">↗</b></a>
+      <span class="pipeline-connector" aria-hidden="true"><i></i>→</span>
+      <a class="pipeline-node" href="#evidence-title"><span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6m-5 0v6l-6 10a1.4 1.4 0 0 0 1 2h14a1.4 1.4 0 0 0 1-2L14 9V3M7 15h10m-6 3 1 1 2-2"/></svg></span><span><small>03 / VERIFY</small><strong>自动化测试</strong><em>生成用例 · 独立验收</em></span><b aria-hidden="true">↘</b></a>
+    </nav>
     <div id="global-error" class="alert error-alert" role="alert" hidden></div>
 
     <section class="card project-setup-card" id="project-workspace" aria-labelledby="project-title">
-      <div class="section-heading"><div class="heading-with-number"><span class="section-number">↗</span><div><div class="mini-label">AUTONOMOUS PROJECT</div><h2 id="project-title">完整工程自主补全</h2><p>从原始工程开始，自动规划、分析、生成测试、修复与独立验证。</p></div></div><span class="subtle-tag">九项能力 · ILP 预算规划</span></div>
-      <div class="project-intro"><span class="project-live-dot"></span><p>点击启动后使用所选真实模型。每次运行独立生成测试和补丁，保留原工程快照及完整证据。</p></div>
+      <div class="section-heading"><div class="heading-with-number"><span class="section-number">⌘</span><div><div class="mini-label">PROJECT CONTROL</div><h2 id="project-title">完整工程自主补全</h2></div></div><div class="project-heading-actions"><a href="/static/rich-cli-demo/index.html">运行样例 ↗</a><span class="subtle-tag">ILP 资源规划</span></div></div>
+      <div class="project-controls"><div class="project-target"><div class="control-label"><span>01</span> 任务配置</div>
       <div class="project-config-grid">
         <label class="field">工程<select id="project-select" disabled><option>读取可用工程…</option></select></label>
         <label class="field">真实模型服务<select id="project-provider-select" aria-describedby="project-provider-note" disabled><option>读取模型配置…</option></select></label>
         <label class="field">修复轮数<select id="project-rounds-select"><option value="1">最多 1 轮</option><option value="2" selected>最多 2 轮</option><option value="3">最多 3 轮</option><option value="4">最多 4 轮</option><option value="5">最多 5 轮</option></select></label>
       </div>
       <div class="project-context"><p id="project-source-note">工程来源加载中…</p><p id="project-provider-note">仅可选择已配置的真实模型服务；不会自动切换为离线回放。</p></div>
-      <div class="budget-heading"><strong>本次运行预算</strong><span>ILP 按预算选择策略和执行顺序；下方计划值为估计。</span></div>
+      </div><div class="project-resources"><div class="control-label"><span>02</span> 资源预算</div>
       <div class="budget-inputs">
         <label class="field">时间上限（分钟）<input id="project-wall-minutes" type="number" min="1" max="240" step="1" value="30" inputmode="numeric" required></label>
         <label class="field">Token 上限<input id="project-token-limit" type="number" min="1000" max="2000000" step="1000" value="60000" inputmode="numeric" required></label>
         <label class="field">模型并发槽位<input id="project-model-slots" type="number" min="1" max="8" step="1" value="1" inputmode="numeric" required></label>
         <label class="field">CPU 并发槽位<input id="project-cpu-slots" type="number" min="1" max="16" step="1" value="2" inputmode="numeric" required></label>
       </div>
+      <p class="budget-footnote">ILP 按预算规划策略与执行顺序，计划用量和实测用量分别记录。</p></div></div>
       <div id="project-config-error" class="project-config-error" role="status" hidden></div>
       <div class="start-row project-start-row"><span id="project-start-note">载入工程与模型配置后可启动 · 原工程保留</span><button id="project-start-button" class="primary-button" disabled><span>启动完整工程</span><span aria-hidden="true">↗</span></button></div>
     </section>
 
-    <section class="card setup-card" aria-labelledby="setup-title">
+    <details class="card benchmark-panel" id="benchmark-workspace"><summary class="benchmark-toggle"><span class="benchmark-icon" aria-hidden="true">⌁</span><span><strong>函数基准与流程验证</strong><small>公开基准 · 单模块任务 · 离线回放</small></span><span class="benchmark-chevron" aria-hidden="true">⌄</span></summary><div class="setup-card" aria-labelledby="setup-title">
       <div class="section-heading"><div class="heading-with-number"><span class="section-number">01</span><div><h2 id="setup-title">函数基准与流程验证</h2><p>选择公开基准或单模块任务；旧运行记录与离线演示继续保留。</p></div></div><span class="subtle-tag">独立验收 · 回归保护</span></div>
       <div class="config-grid">
         <label class="field">模型服务<select id="provider-select" aria-describedby="provider-note" disabled><option>读取模型配置…</option></select></label>
@@ -59,7 +80,7 @@
       <div class="task-selection-heading"><strong>基准任务 <span id="task-count" class="muted">—</span></strong><button id="select-all-button" class="text-button" disabled>全选任务</button></div>
       <div id="task-selector" class="task-selector" aria-live="polite"><div class="loading-state"><span class="spinner"></span> 正在载入公开任务…</div></div>
       <div class="start-row"><span id="selection-note">选择任务后开始验证</span><button id="start-button" class="primary-button" disabled><span>启动验证</span><span aria-hidden="true">↗</span></button></div>
-    </section>
+    </div></details>
 
     <section class="metrics" aria-label="当前运行概览">
       <div class="metric"><span class="metric-label">本次任务</span><div><strong id="metric-total">—</strong><span>项</span></div><small id="metric-mode">尚未选择运行</small></div>
@@ -95,7 +116,7 @@
 
     <section class="card history-card" id="history" aria-labelledby="history-title"><div class="section-heading"><div class="heading-with-number"><span class="section-number">03</span><div><h2 id="history-title">运行记录</h2><p>回看每次验证，下载完整报告。</p></div></div><span id="history-count" class="subtle-tag">0 次运行</span></div><div class="table-scroll"><table><thead><tr><th>运行 / 时间</th><th>模型模式</th><th>验收</th><th>回归破坏</th><th>耗时</th><th>状态</th><th></th></tr></thead><tbody id="history-body"><tr><td colspan="7" class="table-empty">正在读取运行记录…</td></tr></tbody></table></div></section>
 
-    <section id="sources" class="sources-section"><div><div class="eyebrow">EVIDENCE & BOUNDARIES</div><h2>结果来自真实执行。</h2><p>分别记录基线、生成测试、独立验收和回归结果。<br>模型推理与离线回放分开标识，不将回放结果作为模型能力评分。</p></div><div class="source-list"><div><span class="source-index">01</span><div><strong>公开基准与仓库任务</strong><p id="source-description">来源随任务加载；每次运行保留任务来源与可复现证据。</p></div></div><div><span class="source-index">02</span><div><strong>受保护的测试边界</strong><p>独立验收和原有回归在受限执行器中运行，补丁应用前经过安全检查。</p></div></div><div><span class="source-index">03</span><div><strong>华为 AgentArts 接入</strong><p id="agentarts-description">通过实际配置的模型或工作流接口接入；接入状态以本地服务配置为准。</p></div></div></div></section>
+    <section id="sources" class="sources-section"><div><div class="eyebrow">EVIDENCE & BOUNDARIES</div><h2>结果来自真实执行。</h2><p>分别记录基线、生成测试、独立验收和回归结果。<br>模型推理与离线回放分开标识，不将回放结果作为模型能力评分。</p></div><div class="source-list"><div><span class="source-index">01</span><div><strong>公开基准与仓库任务</strong><p id="source-description">来源随任务加载；每次运行保留任务来源与可复现证据。</p></div></div><div><span class="source-index">02</span><div><strong>受保护的测试边界</strong><p>独立验收和原有回归在受限执行器中运行，补丁应用前经过安全检查。</p></div></div><div><span class="source-index">03</span><div><strong>华为 AgentArts 接入</strong><p id="agentarts-description">配置状态尚未确认云端可用。</p><button id="agentarts-check-button" class="secondary-button" type="button">验证云端 Runtime</button></div></div></div></section>
     <footer class="page-footer"><span>TESTFIX-AGENT</span><span>测试约束补全 · 证据支持交付</span><span id="footer-version">LOCAL WORKSPACE</span></footer>
   </main>
   <div id="toast" class="toast" role="status" hidden></div>

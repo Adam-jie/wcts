@@ -25,6 +25,12 @@ def project_fixture():
             'adapter':'flaskr','acceptance':'PRIVATE_PATH','python':'PRIVATE_EXECUTABLE'}
 
 
+def test_agentarts_check_requires_a_deployed_runtime(app):
+    response = TestClient(app).post('/api/agentarts/check')
+    assert response.status_code == 502
+    assert response.json()['detail']['code'] == 'not_configured'
+
+
 def test_project_catalog_exposes_only_public_metadata(app,monkeypatch):
     import testfix.project_tools as tools
     import testfix.project_models as models
@@ -34,6 +40,7 @@ def test_project_catalog_exposes_only_public_metadata(app,monkeypatch):
     assert response.status_code==200
     assert 'PRIVATE' not in response.text
     assert response.json()['defaults']['provider']=='codex_cli'
+    assert response.json()['defaults']['model']=='gpt-5.6-luna'
     from testfix.project_workflow import DEFAULT_BUDGET
     assert response.json()['defaults']['budget']==DEFAULT_BUDGET
 
@@ -60,6 +67,30 @@ def test_project_submission_runs_the_real_controller_entry_and_persists_events(a
     assert result['kind']=='autonomous_project' and result['status']=='rejected'
     assert result['events'][0]['agent']=='fixture-controller'
     assert calls[0]['execution_owner_pid']==os.getpid()
+    assert calls[0]['model']=='gpt-5.6-luna'
+
+
+def test_agentarts_submission_checks_deployed_runtime_and_uses_its_model(app, monkeypatch):
+    import testfix.agentarts_probe as probe
+    import testfix.project_models as models
+    import testfix.project_tools as tools
+    import testfix.project_workflow as workflow
+    finished = threading.Event()
+    calls = []
+    monkeypatch.setattr(models, 'project_provider_status', lambda settings: [{'id': 'agentarts', 'configured': True}])
+    monkeypatch.setattr(tools, 'get_project', lambda settings, identifier: project_fixture())
+    monkeypatch.setattr(probe, 'check_runtime', lambda settings, expected_model=None: (
+        calls.append(('probe', expected_model)) or {'model': 'maas-model'}))
+    def boundary(run, settings, persist):
+        calls.append(('run', run['model']))
+        run['status'] = 'rejected'
+        persist(run)
+        finished.set()
+    monkeypatch.setattr(workflow, 'execute_project_run', boundary)
+    response = TestClient(app).post('/api/project-runs', json={'provider': 'agentarts'})
+    assert response.status_code == 202 and finished.wait(3)
+    assert calls == [('probe', None), ('run', 'maas-model')]
+    app.state.store.pool.shutdown(wait=True)
 
 
 @pytest.mark.parametrize('adapter,supplied_wall,expected_wall',[

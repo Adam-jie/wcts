@@ -1,0 +1,563 @@
+{
+  "source_files": [
+    "testfix/api.py",
+    "testfix/hardware.py",
+    "testfix/frontend.py",
+    "testfix/product_campaign.py",
+    "testfix/product_http.py",
+    "testfix/product_http_worker.py",
+    "scripts/run_product_campaign.py"
+  ],
+  "contract": {
+    "schema_version": 1,
+    "name": "TestFix localhost read-only repeat/data smoke — not full product acceptance",
+    "product_type": "web",
+    "rounds": 25,
+    "seed": 20261016,
+    "max_duration_s": 240,
+    "cases": [
+      {
+        "id": "health_repeat",
+        "dimension": "stability",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "plain",
+            "input": {
+              "path": "/api/health",
+              "select": [
+                {
+                  "path": [
+                    "status"
+                  ],
+                  "op": "value"
+                },
+                {
+                  "path": [
+                    "version"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 200,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "ok"
+                },
+                {
+                  "present": true,
+                  "value": "string"
+                }
+              ]
+            }
+          },
+          {
+            "id": "json_accept",
+            "input": {
+              "path": "/api/health",
+              "headers": {
+                "Accept": "application/json"
+              },
+              "select": [
+                {
+                  "path": [
+                    "status"
+                  ],
+                  "op": "value"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 200,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "ok"
+                }
+              ]
+            }
+          },
+          {
+            "id": "unicode_query",
+            "input": {
+              "path": "/api/health",
+              "query": [
+                [
+                  "probe",
+                  "中文 空格 & +"
+                ]
+              ],
+              "headers": {
+                "Accept": "*/*"
+              },
+              "select": [
+                {
+                  "path": [
+                    "status"
+                  ],
+                  "op": "value"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 200,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "ok"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "transport_schema",
+        "dimension": "functional",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "declared_capabilities",
+            "input": {
+              "path": "/api/hardware/capabilities",
+              "select": [
+                {
+                  "path": [
+                    "transports",
+                    "http",
+                    "available"
+                  ],
+                  "op": "value"
+                },
+                {
+                  "path": [
+                    "limits",
+                    "steps"
+                  ],
+                  "op": "value"
+                },
+                {
+                  "path": [
+                    "loopback",
+                    "is_simulation"
+                  ],
+                  "op": "value"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 200,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": true
+                },
+                {
+                  "present": true,
+                  "value": 32
+                },
+                {
+                  "present": true,
+                  "value": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "unknown_dataset",
+        "dimension": "functional",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "unknown_0",
+            "input": {
+              "path": "/api/lab/datasets/missing-dataset/tasks",
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 400,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "string"
+                }
+              ]
+            }
+          },
+          {
+            "id": "unknown_1",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite-unknown/tasks",
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 400,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "string"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "invalid_query",
+        "dimension": "input_validation",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "invalid_0",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "-1"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_1",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "0"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_2",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "51"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_3",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "word"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_4",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "null"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_5",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  "true"
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invalid_6",
+            "input": {
+              "path": "/api/lab/datasets/swe-bench-lite/tasks",
+              "query": [
+                [
+                  "limit",
+                  ""
+                ]
+              ],
+              "select": [
+                {
+                  "path": [
+                    "detail"
+                  ],
+                  "op": "type"
+                }
+              ]
+            },
+            "expected": {
+              "status_code": 422,
+              "json_valid": true,
+              "json_select": [
+                {
+                  "present": true,
+                  "value": "array"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "response_headers",
+        "dimension": "security_smoke",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "health_headers",
+            "input": {
+              "path": "/api/health",
+              "select_headers": [
+                "x-content-type-options",
+                "cache-control"
+              ]
+            },
+            "expected": {
+              "status_code": 200,
+              "json_valid": true,
+              "headers": {
+                "x-content-type-options": "nosniff",
+                "cache-control": "no-store"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "unsupported_method",
+        "dimension": "security_smoke",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "health_post",
+            "input": {
+              "method": "POST",
+              "path": "/api/health"
+            },
+            "expected": {
+              "status_code": 405,
+              "json_valid": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "cross_origin",
+        "dimension": "security_smoke",
+        "critical": true,
+        "timeout_s": 3,
+        "rows": [
+          {
+            "id": "unrelated_origin",
+            "input": {
+              "method": "POST",
+              "path": "/api/health",
+              "headers": {
+                "Origin": "https://unrelated.example"
+              },
+              "body_contains": "Cross-origin request rejected"
+            },
+            "expected": {
+              "status_code": 403,
+              "json_valid": false,
+              "body_contains": true
+            }
+          }
+        ]
+      }
+    ],
+    "required_dimensions": [
+      {
+        "id": "stability",
+        "required_case_ids": [
+          "health_repeat"
+        ],
+        "min_rounds": 25,
+        "min_data_rows": 3,
+        "min_duration_s": 0
+      },
+      {
+        "id": "functional",
+        "required_case_ids": [
+          "transport_schema",
+          "unknown_dataset"
+        ],
+        "min_rounds": 25,
+        "min_data_rows": 1,
+        "min_duration_s": 0
+      },
+      {
+        "id": "input_validation",
+        "required_case_ids": [
+          "invalid_query"
+        ],
+        "min_rounds": 25,
+        "min_data_rows": 7,
+        "min_duration_s": 0
+      },
+      {
+        "id": "security_smoke",
+        "required_case_ids": [
+          "response_headers",
+          "unsupported_method",
+          "cross_origin"
+        ],
+        "min_rounds": 25,
+        "min_data_rows": 1,
+        "min_duration_s": 0
+      }
+    ]
+  }
+}

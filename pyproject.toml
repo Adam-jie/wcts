@@ -18,15 +18,17 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<9"]
+hardware = ["pyserial>=3.5,<4", "paramiko>=3,<5"]
 
 [project.scripts]
 testfix = "testfix.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["testfix*"]
+namespaces = false
 
 [tool.setuptools.package-data]
-testfix = ["skill_library/catalog.json", "skill_library/*/SKILL.md", "skill_library/*/references/*.json"]
+testfix = ["skill_library/catalog.json", "skill_library/*/SKILL.md", "skill_library/*/references/*.json", "hardware_skills/*/SKILL.md", "specialist_library/catalog.json", "specialist_library/*/SKILL.md", "feature_skills/*/SKILL.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

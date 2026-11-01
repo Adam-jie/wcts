@@ -1,6 +1,8 @@
 # AgentArts 托管与实际采用证据
 
-本地首版支持将五种 Agent 的角色推理托管到华为 AgentArts Runtime，本地监督编排和测试执行器逐角色调用云入口。使用官方 [InvokeRuntime](https://support.huaweicloud.com/api-agentarts/InvokeRuntime1.html) 与 [Runtime SDK](https://github.com/huaweicloud/agentarts-sdk-python/tree/26a4cf9a06a1c55cb13700e5b3f47f9f4fb84e07)；SDK 和真实云环境尚未安装或验证，HTTP 契约单元测试使用 mock。
+本地首版支持将五种函数任务角色，以及完整工程的八项模型 Skill 推理托管到华为 AgentArts Runtime；监督编排和测试执行器调用云入口。第九项交付验证由确定性工具完成。使用官方 [InvokeRuntime](https://support.huaweicloud.com/api-agentarts/InvokeRuntime1.html) 与 [Runtime SDK](https://github.com/huaweicloud/agentarts-sdk-python/tree/26a4cf9a06a1c55cb13700e5b3f47f9f4fb84e07)；SDK 和真实云环境尚未安装或验证，HTTP 契约单元测试使用 mock。无需先购买 ECS 的部署顺序见[华为云部署路径](huawei-deployment.md)。
+
+部署后先用 `uv run python -m testfix.cli agentarts-check --model <模型ID>` 验证地址、入站认证、模型配置和固定 Skill 文件哈希。Runtime 的 `testfix.runtime-info.v1` 检查不调用模型；完整工程提交也会先做该检查，避免调用到旧版 Skill 或错误模型。它只证明接口响应，实际推理和补全效果仍须用真实任务验证。
 
 ## 业务契约
 

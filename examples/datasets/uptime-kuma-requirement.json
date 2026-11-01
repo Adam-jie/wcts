@@ -1,0 +1,36 @@
+{
+  "schema": "testfix.dataset-case.v1",
+  "id": "uptime-kuma-requirement-001",
+  "title": "示例自然语言需求：JSON 监控响应新鲜度检查（待缺口核查与独立验收）",
+  "track": "requirement_implementation",
+  "domain": "web",
+  "source": {
+    "repository": "https://github.com/louislam/uptime-kuma",
+    "commit": "124e79bce978ce29f0de681267b62b7d0d3d4429",
+    "license": "MIT"
+  },
+  "requirements": [
+    {
+      "id": "FRESHNESS-REQUEST",
+      "description": "示例需求：我希望 JSON 查询监控可设置响应数据的最大年龄，数据虽然 HTTP 200 但已经过期时也要告警；页面能设置，重启后还保留。此项为需求样例，不声称已经确认上游缺失。",
+      "expected": "先核对现有版本是否已满足，再形成缺口与实现计划。若已经满足则记录 already_satisfied，不当作一次补全成功。"
+    },
+    {
+      "id": "FRESHNESS-BEHAVIOR",
+      "description": "增加可选 max_response_age_seconds，开启时读取 JSON 顶层 observed_at 的 RFC3339 UTC 时间。",
+      "expected": "在冻结的宿主时间下，过去时间的年龄不超过阈值可通过，超过阈值判 DOWN；未来时间不超过5秒容差可通过，超过容差判 DOWN；时间缺失或非法判 DOWN。原有JSON查询及状态码断言仍须通过；新鲜响应恢复时可回到UP。"
+    },
+    {
+      "id": "FRESHNESS-PERSISTENCE",
+      "description": "页面可配置正整数阈值并持久化，默认关闭，不改变已有监控行为。",
+      "expected": "启用或关闭及阈值重启后保持；零、负数和非法输入拒绝；未开启时与原版相同。完整页面、数据库、监控与原有HTTP/关键词/JSON监控回归通过，验收测试不可由修复Agent更改。"
+    }
+  ],
+  "allowed_changes": [
+    "server/model/monitor.js",
+    "src/pages/EditMonitor.vue",
+    "db/knex_migrations/20261016000000_add_monitor_max_response_age_seconds.js"
+  ],
+  "protected_paths": ["test/**", "config/playwright.config.js", "package-lock.json"],
+  "mutations": []
+}

@@ -1,0 +1,163 @@
+{
+  "source_files": [
+    "testfix/api.py",
+    "testfix/hardware.py",
+    "testfix/frontend.py",
+    "testfix/product_campaign.py",
+    "testfix/product_http.py",
+    "testfix/product_http_worker.py",
+    "testfix/product_http_load.py",
+    "testfix/product_http_load_worker.py",
+    "testfix/package_tools.py",
+    "testfix/project_eval.py",
+    "scripts/run_product_campaign.py"
+  ],
+  "contract": {
+    "schema_version": 1,
+    "name": "TestFix localhost client concurrency / 1s latency budget smoke — not full product acceptance",
+    "product_type": "web",
+    "rounds": 3,
+    "seed": 20261016,
+    "max_duration_s": 90,
+    "cases": [
+      {
+        "id": "parallel_clients",
+        "dimension": "concurrency_smoke",
+        "critical": true,
+        "timeout_s": 12,
+        "rows": [
+          {
+            "id": "two_clients",
+            "input": {
+              "request": {
+                "path": "/api/health"
+              },
+              "concurrency": 2,
+              "requests_per_worker": 4,
+              "expected_status": 200,
+              "latency_budget_s": 1
+            },
+            "expected": {
+              "requests_planned": 8,
+              "requests_completed": 8,
+              "requests_not_executed": 0,
+              "error_count": 0,
+              "status_counts": {
+                "200": 8
+              },
+              "expected_status_met": true,
+              "latency_budget_met": true,
+              "workers_overlapped": true
+            }
+          },
+          {
+            "id": "four_clients",
+            "input": {
+              "request": {
+                "path": "/api/health"
+              },
+              "concurrency": 4,
+              "requests_per_worker": 8,
+              "expected_status": 200,
+              "latency_budget_s": 1
+            },
+            "expected": {
+              "requests_planned": 32,
+              "requests_completed": 32,
+              "requests_not_executed": 0,
+              "error_count": 0,
+              "status_counts": {
+                "200": 32
+              },
+              "expected_status_met": true,
+              "latency_budget_met": true,
+              "workers_overlapped": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "latency_budget",
+        "dimension": "performance_smoke",
+        "critical": true,
+        "timeout_s": 12,
+        "rows": [
+          {
+            "id": "health_budget",
+            "input": {
+              "request": {
+                "path": "/api/health"
+              },
+              "concurrency": 4,
+              "requests_per_worker": 4,
+              "expected_status": 200,
+              "latency_budget_s": 1
+            },
+            "expected": {
+              "requests_planned": 16,
+              "requests_completed": 16,
+              "requests_not_executed": 0,
+              "error_count": 0,
+              "status_counts": {
+                "200": 16
+              },
+              "expected_status_met": true,
+              "latency_budget_met": true,
+              "workers_overlapped": true
+            }
+          },
+          {
+            "id": "validation_budget",
+            "input": {
+              "request": {
+                "path": "/api/lab/datasets/swe-bench-lite/tasks",
+                "query": [
+                  [
+                    "limit",
+                    "0"
+                  ]
+                ]
+              },
+              "concurrency": 4,
+              "requests_per_worker": 8,
+              "expected_status": 422,
+              "latency_budget_s": 1
+            },
+            "expected": {
+              "requests_planned": 32,
+              "requests_completed": 32,
+              "requests_not_executed": 0,
+              "error_count": 0,
+              "status_counts": {
+                "422": 32
+              },
+              "expected_status_met": true,
+              "latency_budget_met": true,
+              "workers_overlapped": true
+            }
+          }
+        ]
+      }
+    ],
+    "required_dimensions": [
+      {
+        "id": "concurrency_smoke",
+        "required_case_ids": [
+          "parallel_clients"
+        ],
+        "min_rounds": 3,
+        "min_data_rows": 2,
+        "min_duration_s": 0
+      },
+      {
+        "id": "performance_smoke",
+        "required_case_ids": [
+          "latency_budget"
+        ],
+        "min_rounds": 3,
+        "min_data_rows": 2,
+        "min_duration_s": 0
+      }
+    ]
+  }
+}

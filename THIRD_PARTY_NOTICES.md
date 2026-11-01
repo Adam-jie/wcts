@@ -29,4 +29,8 @@ Python dependency source distributions, wheels, model credentials and SDK source
 
 `web/lab/vendor/three.module.min.js` is Three.js 0.170.0 from the official [r170 release](https://github.com/mrdoob/three/tree/r170), distributed under MIT. Its original license is retained in `web/lab/vendor/THREE-LICENSE.txt`; source URL and the fixed SHA-256 are recorded in `web/lab/vendor/SOURCE.md`. The local application does not request a CDN at runtime.
 
+The hardware workbench bundle includes third-party frontend dependencies; their license texts are retained in `web/hardware-app/THIRD_PARTY_NOTICES.txt`.
+
+The upstream FEA-Bench source and its datasets are not bundled. Where needed, obtain [microsoft/FEA-Bench](https://github.com/microsoft/FEA-Bench) separately and retain its license; the TestFix integration is distinct from the upstream evaluator.
+
 SWE-bench Lite and BugsInPy raw datasets are not bundled. `scripts/collect_benchmarks.py` downloads separately pinned metadata and retains evaluator-only source evidence locally. SWE-bench declares MIT for its harness; original project licenses remain effective. The pinned BugsInPy archive has no identified LICENSE, so its metadata is not redistributed by this source release. Collection and environment limitations are recorded in `docs/benchmark-datasets.md`.

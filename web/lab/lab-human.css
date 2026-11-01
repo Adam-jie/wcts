@@ -1,12 +1,12 @@
 /* Human workspace: a generous stage, readable roles, and optional setup. */
 :root {
-  --surface: #122329;
-  --line: #2b4148;
-  --text: #e9f2ee;
-  --muted: #9aafb2;
+  --surface: var(--ui-panel);
+  --line: var(--ui-line);
+  --text: var(--ui-text);
+  --muted: var(--ui-muted);
 }
 body {
-  background: radial-gradient(ellipse at 67% 0, #1d383540, transparent 52%), #0b161c;
+  background: radial-gradient(ellipse at 67% 0, #1c364640, transparent 52%), var(--ui-page);
 }
 .app-header { height: 66px; padding: 0 28px; background: #0b161ce8; }
 .brand { font-size: 21px; }

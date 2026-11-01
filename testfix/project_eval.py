@@ -90,11 +90,17 @@ def _cases(xml_path: Path) -> tuple[list[dict], int]:
     records = []
     for case in root.iter("testcase"):
         status = "passed"
+        failure = None
         for child in case:
             if child.tag in {"failure", "error", "skipped"}:
                 status = child.tag
+                failure = child
                 break
-        records.append({"id": f"{case.attrib.get('classname', '')}::{case.attrib.get('name', '')}", "status": status})
+        record = {"id": f"{case.attrib.get('classname', '')}::{case.attrib.get('name', '')}", "status": status}
+        if status == "failure" and failure is not None and failure.attrib.get("message"):
+            message = failure.attrib["message"].lstrip()
+            record["assertion_failure"] = message.startswith(("assert ", "AssertionError", "Failed: DID NOT RAISE"))
+        records.append(record)
     return records, errors
 
 
@@ -111,7 +117,9 @@ def _run_suite(python: Path, cwd: Path, tests: Path, artifact_dir: Path, name: s
     artifact_dir.mkdir(parents=True, exist_ok=True)
     token = uuid.uuid4().hex
     xml_path = artifact_dir / f"{name}-{token}.xml"
-    temp_path = artifact_dir / f"{name}-{token}-tmp"
+    # SQLite on Windows can reject long UTF-8 database paths even when Python
+    # itself can open them. Keep each isolated pytest data root short.
+    temp_path = artifact_dir / f"t-{token[:12]}"
     stdout_path = artifact_dir / f"{name}-{token}.stdout.txt"
     stderr_path = artifact_dir / f"{name}-{token}.stderr.txt"
     binding_path = artifact_dir / f"{name}-{token}.binding.json"
@@ -177,12 +185,13 @@ def _diff(baseline: Path, candidate: Path, files: set[str]) -> str:
     return "".join(chunks)
 
 
-def _functional_failure(suite: dict) -> bool:
-    """True only for a collected assertion failure, never infrastructure/skip noise."""
+def _functional_failure(suite: dict, *, require_assertion: bool = True) -> bool:
+    """Require assertion evidence unless an adapter explicitly permits other failures."""
     return (not suite["timeout"] and not suite["parse_error"] and not suite.get("binding_error")
             and suite["collection_errors"] == 0
             and not suite["duplicate_case_ids"] and suite["total"] > 0
-            and any(case["status"] == "failure" for case in suite["cases"]))
+            and any(case["status"] == "failure" and (not require_assertion or case.get("assertion_failure") is True)
+                    for case in suite["cases"]))
 
 
 def _paired_cases_match(before: dict, after: dict) -> bool:

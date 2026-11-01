@@ -29,3 +29,21 @@ auth.json
 *.key
 *.sqlite
 *.db
+
+# Local runs, imported projects, package managers and desktop binaries
+.tmp-*/
+.paper-smoke-*/
+desktop/node_modules/
+desktop/.runtime-cache/
+frontend/node_modules/
+frontend/.vite/
+dist/
+experiments/web-live/**/baseline/
+experiments/web-live/**/candidate/
+experiments/web-live/**/node_modules/
+experiments/web-live/**/*.zip
+*.sqlite3
+experiments/flaskr/*.json
+experiments/rich-cli/baseline-evidence/
+experiments/gpt56/
+experiments/rich-cli/*/baseline-results.*

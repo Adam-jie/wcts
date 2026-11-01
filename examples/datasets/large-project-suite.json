@@ -1,0 +1,93 @@
+{
+  "schema": "testfix.dataset-design.v1",
+  "id": "large-project-suite-v1",
+  "status": "design_not_execution_results",
+  "description": "完整多模块工程；缺陷修复与需求驱动实现分开评测。候选清单不代表已下载、适配或测试通过。",
+  "tracks": [
+    {"id": "controlled_defect_repair", "name": "开源完整工程受控缺陷修复", "variants": ["missing_implementation", "behavioral_error", "build_or_import_error"], "states": ["pristine", "broken", "candidate"]},
+    {"id": "requirement_implementation", "name": "用户描述功能后的实现", "scopes": ["extend_existing", "greenfield_separate_score"], "acceptance": "先冻结可观察需求与验收合同；没有新增功能的健康参考实现时，不伪造参考答案。"}
+  ],
+  "planned_counts": {"projects": 8, "controlled_defect_cases": 24, "requirement_cases": 8, "total_cases": 32},
+  "admission": {
+    "complete_repository_required": true,
+    "required_evidence": ["full_commit_and_submodule_locks", "measured_scale", "locked_environment", "healthy_reference_build_start_tests", "reproducible_injected_failure", "frozen_independent_acceptance", "unchanged_regression", "candidate_build_start_behavior"],
+    "scale_measurement": ["production_source_file_count", "source_lines_with_method", "modules", "services_or_toolchains", "upstream_collected_tests"],
+    "split": "按仓库及缺陷家族分组；同一注入家族及其变体不跨开发/验证/留出集。",
+    "hardware_levels": ["host_simulation", "qemu_firmware", "physical_board"],
+    "success_rule": "构建、启动、目标功能、独立验收、原有回归和受保护文件完整性全部满足；不要求补丁逐字等于原版。"
+  },
+  "projects": [
+    {
+      "id": "uptime-kuma", "domain": "web", "name": "Uptime Kuma", "repository": "https://github.com/louislam/uptime-kuma", "ref": "2.0.0", "license": "MIT", "status": "candidate_environment_required",
+      "modules": ["Vue frontend", "Express backend", "Socket.IO", "database", "monitors", "notifications", "status pages"],
+      "defect_proposals": {"missing_implementation": "删除 JSON 或关键词监控的判定分支。", "behavioral_error": "仅按 HTTP 200 判 UP，忽略错误业务字段。", "build_or_import_error": "在生产监控模块注入未定义符号或语法错误。"},
+      "requirement_proposal": "在完整监控流程增加一项明确的业务状态判定，并验证异常、恢复、持久化及页面显示。",
+      "acceptance_scenario": "本地目标依次返回正常字段、HTTP200但错误字段、500及超时；比较健康版与修复版的 UP/DOWN、恢复、数据库心跳及真实页面。",
+      "environment": ["Node matching pinned package.json", "npm lock", "browser", "Docker/Testcontainers for upstream E2E"],
+      "references": ["https://github.com/louislam/uptime-kuma/blob/2.0.0/package.json", "https://github.com/louislam/uptime-kuma/blob/2.0.0/server/model/monitor.js", "https://github.com/louislam/uptime-kuma/blob/2.0.0/config/playwright.config.js"]
+    },
+    {
+      "id": "paperless-ngx", "domain": "web", "name": "Paperless-ngx", "repository": "https://github.com/paperless-ngx/paperless-ngx", "ref": "dev", "license": "GPL-3.0; inspect pinned files", "status": "candidate_environment_required",
+      "modules": ["Django API", "Angular frontend", "document import", "OCR", "background tasks", "tagging", "full-text search"],
+      "defect_proposals": {"missing_implementation": "删除文档标签过滤处理。", "behavioral_error": "改变日期边界或过滤条件，返回错误文档集合。", "build_or_import_error": "破坏生产模块的导入或函数符号。"},
+      "requirement_proposal": "增加事先定义的文档组合检索行为，覆盖权限、分页及下载保持。",
+      "acceptance_scenario": "导入固定许可文档并完成OCR，检索指定内容、标签和日期范围，确认文档集合、任务状态与下载内容。",
+      "environment": ["locked Python/uv", "Node/pnpm", "OCR dependencies", "database and background queue", "browser"],
+      "references": ["https://docs.paperless-ngx.com/development/", "https://github.com/paperless-ngx/paperless-ngx/blob/dev/LICENSE"]
+    },
+    {
+      "id": "spyder", "domain": "software", "name": "Spyder 桌面 IDE", "repository": "https://github.com/spyder-ide/spyder", "ref": "master", "license": "MIT; third-party notices retained", "status": "candidate_environment_required",
+      "modules": ["Qt desktop", "editor", "console", "debugger", "find in files", "variable explorer", "plugins"],
+      "defect_proposals": {"missing_implementation": "删除全工程搜索中的目录排除逻辑。", "behavioral_error": "反转大小写开关或返回错误行列号。", "build_or_import_error": "破坏搜索插件生产模块导入。"},
+      "requirement_proposal": "为工程搜索增加明确的新筛选行为，保留搜索跳转、编辑保存和脚本执行。",
+      "acceptance_scenario": "用固定多文件工程打开完整IDE，执行搜索、排除目录、多匹配和Unicode场景，双击跳转，再编辑保存并运行脚本。",
+      "environment": ["Python/Conda environment", "Qt/QtWebEngine", "matching spyder-kernels", "language server", "GUI test runtime"],
+      "references": ["https://github.com/spyder-ide/spyder/blob/master/CONTRIBUTING.md", "https://github.com/spyder-ide/spyder/blob/master/spyder/plugins/findinfiles/widgets/search_thread.py", "https://github.com/spyder-ide/spyder/blob/master/LICENSE.txt"]
+    },
+    {
+      "id": "sqlfluff", "domain": "software", "name": "SQLFluff", "repository": "https://github.com/sqlfluff/sqlfluff", "ref": "3.4.2", "license": "MIT", "status": "candidate_environment_required",
+      "modules": ["CLI", "parser", "dialects", "lint rules", "autofix", "configuration", "plugins"],
+      "defect_proposals": {"missing_implementation": "删除规则或配置传递中的生产行为。", "behavioral_error": "改变大小写修复或忽略规则语义。", "build_or_import_error": "在生产规则模块注入导入或语法错误。"},
+      "requirement_proposal": "增加明确的SQL工程检查或修复选项，冻结跨文件配置与多方言的预期结果。",
+      "acceptance_scenario": "通过完整CLI处理固定SQL工程目录，对比诊断位置、退出码、实际修复文件、幂等性和原有规则回归。",
+      "environment": ["Python matching pinned pyproject", "locked tox/pytest environment", "dbt plugin database tests scored separately"],
+      "references": ["https://github.com/sqlfluff/sqlfluff/blob/3.4.2/pyproject.toml", "https://github.com/sqlfluff/sqlfluff/blob/3.4.2/tox.ini", "https://github.com/sqlfluff/sqlfluff/blob/3.4.2/src/sqlfluff/rules/capitalisation/CP01.py"]
+    },
+    {
+      "id": "zephyr", "domain": "mcu", "name": "Zephyr RTOS", "repository": "https://github.com/zephyrproject-rtos/zephyr", "ref": "main", "license": "Apache-2.0; third-party per-file licenses", "status": "candidate_environment_required",
+      "modules": ["kernel", "drivers", "subsystems", "board support", "Twister", "ztest"],
+      "defect_proposals": {"missing_implementation": "删除消息队列回绕或唤醒分支。", "behavioral_error": "改变队列边界、FIFO或超时逻辑。", "build_or_import_error": "在生产内核模块注入编译符号错误。"},
+      "requirement_proposal": "在固定板级应用增加传感器数据采集与消息队列处理，明确采样、超时和输出合同。",
+      "acceptance_scenario": "完整固件在QEMU中启动，执行FIFO、满队列、超时和唤醒测试及内核回归；真实串口和外设另列板卡验收。",
+      "environment": ["west manifest locks", "Zephyr SDK", "CMake/Ninja", "Twister/ztest", "QEMU qemu_cortex_m3", "board and probe for physical tests"],
+      "references": ["https://docs.zephyrproject.org/latest/develop/twister/index.html", "https://docs.zephyrproject.org/latest/boards/qemu/cortex_m3/doc/index.html", "https://github.com/zephyrproject-rtos/zephyr/blob/main/kernel/msg_q.c"]
+    },
+    {
+      "id": "freertos", "domain": "mcu", "name": "FreeRTOS 完整发行版", "repository": "https://github.com/FreeRTOS/FreeRTOS", "ref": "main", "license": "MIT; submodule licenses retained", "status": "candidate_environment_required",
+      "modules": ["kernel submodule", "libraries", "board demos", "queue", "event groups", "task notifications", "timers"],
+      "defect_proposals": {"missing_implementation": "删除队列阻塞唤醒或事件处理分支。", "behavioral_error": "错误维护队列收发计数或ISR返回状态。", "build_or_import_error": "在生产内核模块注入未定义符号。"},
+      "requirement_proposal": "为完整实时系统增加任务间数据交接与超时恢复，冻结时序窗口和行为预期。",
+      "acceptance_scenario": "使用完整CORTEX_MPS2_QEMU_IAR_GCC工程与main_full自检，重复验证队列/信号量/事件组等；不以一次PASS或串口回显验收。",
+      "environment": ["top-level and all submodule SHAs", "arm-none-eabi-gcc", "Make", "QEMU mps2-an385", "shared mainCREATE_SIMPLE_BLINKY_DEMO_ONLY=0 build configuration"],
+      "references": ["https://github.com/FreeRTOS/FreeRTOS", "https://github.com/FreeRTOS/FreeRTOS/blob/main/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/main_full.c"]
+    },
+    {
+      "id": "uboot", "domain": "mpu", "name": "U-Boot", "repository": "https://github.com/u-boot/u-boot", "ref": "master", "license": "GPL-2.0 primarily; per-file exceptions", "status": "candidate_environment_required",
+      "modules": ["bootloader", "commands", "environment", "storage", "board support", "sandbox", "pytest integration"],
+      "defect_proposals": {"missing_implementation": "删除环境变量导入处理。", "behavioral_error": "改变变量覆盖、删除或持久化语义。", "build_or_import_error": "在生产命令模块注入编译错误。"},
+      "requirement_proposal": "增加明确的启动环境校验或命令行为，保留原有环境保存、重启与启动回归。",
+      "acceptance_scenario": "先在Linux sandbox测试命令输入输出、退出码、导入导出和持久化，再在固定QEMU ARM/AArch64配置运行；真实板卡另计。",
+      "environment": ["Linux/WSL2/container", "GCC/Make", "Python pytest dependencies", "cross compiler and QEMU for ARM target"],
+      "references": ["https://docs.u-boot-project.org/en/latest/develop/pytest/usage.html", "https://github.com/u-boot/u-boot/blob/master/test/py/tests/test_env.py"]
+    },
+    {
+      "id": "mosquitto", "domain": "mpu", "name": "Mosquitto Linux 网关服务", "repository": "https://github.com/eclipse-mosquitto/mosquitto", "ref": "master", "license": "EPL-2.0 OR BSD-3-Clause", "status": "candidate_environment_required",
+      "modules": ["MQTT broker", "clients", "retained messages", "QoS", "persistence", "bridges", "protocol tests"],
+      "defect_proposals": {"missing_implementation": "删除保留消息对新订阅者的投递。", "behavioral_error": "改变清除保留消息或主题匹配条件。", "build_or_import_error": "在生产broker模块注入未定义符号。"},
+      "requirement_proposal": "在Linux网关增加明确的离线消息或转发行为，覆盖断连重连、权限和持久化。",
+      "acceptance_scenario": "构建并启动完整broker，真实客户端发布保留消息、新客户端订阅、核对旧消息、清除后再次订阅，检查重启持久化及其他协议回归。",
+      "environment": ["Linux/ARM Linux target", "C compiler/build dependencies", "Python 3/CUnit", "broker/client processes", "ARM build/deployment evidence for physical MPU claims"],
+      "references": ["https://github.com/eclipse-mosquitto/mosquitto/blob/master/README-tests.md", "https://github.com/eclipse-mosquitto/mosquitto/blob/master/src/retain.c"]
+    }
+  ]
+}

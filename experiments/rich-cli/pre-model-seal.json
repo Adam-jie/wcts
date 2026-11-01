@@ -36,11 +36,15 @@
     "tests/test_main.py": "534102887e4d7cd8baf02477a371406331a120314df416189bfc6c1549e3dff4"
   },
   "acceptance": {
+    "baseline-results.txt": "4a4bf909309a6d7fc4d048ecb69e9295d451b0f12cb5ce54750396c9552fe5b9",
+    "baseline-results.xml": "0faf14ab7cc9ccd7112a19ed4dbbae49e12dae80ae1b6ce3f08b32a54b184298",
     "test_csv_literals.py": "cf508c49564a5591080e24d181f35ef7ad1c7708e0339c0d2bbdc0d3a1966bff"
   },
   "behavior_regression": {
+    "baseline-results.txt": "69d9bd581878f1bd4de072784f8cae21b4776532f330765bfd9817b70a07dd46",
+    "baseline-results.xml": "dacba6001749edc516ef845eecb2342e4999b705db202a6845baf3ce861d465a",
     "test_frozen_features.py": "03ccbe7246010abe745abb4fe71684ddf50f9cb380d97c74637cef125e4e96a1"
   },
   "delivery_checks_sha256": "07ec1b08df4bb06336bb9fd51d7ba43a711dae69664901d4c14bc1bdb0cddc6c",
-  "publication_note": "Publication-only seal: baseline and test source bytes unchanged; historical execution logs omitted. Not a new experiment timestamp."
+  "created_before_any_model_generation": true
 }

@@ -38,7 +38,7 @@ def test_inline_request_is_passed_to_registered_project_team(request_cli):
     assert calls[0]['project_id'] == 'Project/rich-cli'
     assert calls[0]['collaboration_request'] == 'CSV 中的方括号要完整保留，并由测试和修复 Agent 协作。'
     assert calls[0]['provider'] == 'codex_cli'
-    assert calls[0]['model'] == 'gpt-5.6-sol'
+    assert calls[0]['model'] == 'gpt-5.6-luna'
     assert calls[0]['budget']['wall_seconds'] == 7200
 
 
@@ -64,6 +64,12 @@ def test_explicit_wall_budget_is_kept_for_request_mode(request_cli):
     invoke, calls = request_cli
     assert invoke('--request', '修复 CSV 字面量', '--wall-seconds', '6100') == 0
     assert calls[0]['budget']['wall_seconds'] == 6100
+
+
+def test_explicit_codex_model_is_kept(request_cli):
+    invoke, calls = request_cli
+    assert invoke('--model', 'gpt-5.6-sol') == 0
+    assert calls[0]['model'] == 'gpt-5.6-sol'
 
 
 @pytest.mark.parametrize('arguments', [
@@ -103,3 +109,15 @@ def test_exact_request_length_limit_is_accepted(request_cli):
     invoke, calls = request_cli
     assert invoke('--request', '需' * 20_000) == 0
     assert len(calls[0]['collaboration_request']) == 20_000
+
+
+def test_public_checkpoint_path_traversal_is_rejected_before_dispatch(request_cli):
+    invoke,calls=request_cli
+    assert invoke('--search','forest','--resume-public-run','../outside/report')==2
+    assert calls==[]
+
+
+def test_public_checkpoint_cannot_skip_the_new_quality_audit(request_cli):
+    invoke,calls=request_cli
+    assert invoke('--resume-public-run','a'*32)==2
+    assert calls==[]

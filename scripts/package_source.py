@@ -9,8 +9,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 TREES = ('testfix', 'web', 'scripts', 'docs', 'agentarts', 'examples', 'tests', 'experiments')
-TOP_FILES = ('README.md', 'pyproject.toml', 'uv.lock', '.env.example', '.gitignore', '.gitattributes',
-             'LICENSE', 'THIRD_PARTY_NOTICES.md', 'CONTRIBUTING.md', 'SECURITY.md')
+TOP_FILES = ('README.md', 'pyproject.toml', 'uv.lock', '.env.example', '.gitignore', '.dockerignore')
 EXCLUDED = {'__pycache__', '.pytest_cache', 'instance', 'build', 'dist', '.git', 'node_modules'}
 
 

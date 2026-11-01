@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b111c"><title>无遁 TestFix · 创建任务</title>
+  <link rel="stylesheet" href="/static/intake/intake.css"><script type="module" src="/static/intake/intake.js"></script>
+  <link rel="stylesheet" href="/static/theme.css">
+  <link rel="stylesheet" href="/static/intake/details-assistant.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/"><span class="brand-mark">无遁</span><span>TestFix<small>ENGINEERING WORKSPACE</small></span></a>
+    <span class="nav-label">工作空间</span>
+    <nav aria-label="工作台导航"><a href="/tasks"><span>▤</span> 任务中心</a><a href="/intake" aria-current="page"><span>＋</span> 创建任务</a><a href="/engineering"><span>⌘</span> 工程协作</a><a href="/explorer"><span>◇</span> 架构模型</a><a href="/hardware"><span>⌁</span> 硬件测试</a><a href="/web-testing"><span>↗</span> 网页验证</a><a href="/"><span>◫</span> 全部功能</a></nav>
+    <div class="recent-heading"><span class="nav-label">最近任务</span><button type="button" id="refresh-history" aria-label="刷新任务记录">↻</button></div>
+    <div id="history" class="history"><p class="muted">正在读取记录…</p></div>
+    <footer><i></i> 本地保存<small>文件与需求保留在当前工程中</small></footer>
+  </aside>
+  <main>
+    <header class="topbar"><span>工作空间 <b>/</b> 创建任务</span><a href="/tasks">查看全部任务 ↗</a></header>
+    <section class="heading"><div class="eyebrow"><i></i> NEW ENGINEERING TASK</div><h1>从你的问题<span>，</span>开始。</h1><p>交给我们一个工程、一份安装包，或者一个想法。</p></section>
+    <div class="workspace">
+      <section class="input-card" aria-labelledby="input-title">
+        <header class="card-header"><span class="step-number">01</span><div><h2 id="input-title">提供材料与需求</h2><p>选择适合你的输入方式</p></div><span class="card-tag">任务入口</span></header>
+        <div class="mode-tabs" role="tablist" aria-label="输入方式">
+          <button type="button" id="tab-upload" role="tab" aria-selected="true" aria-controls="panel-upload" data-mode="upload"><span>↑</span>上传文件<small>安装包 / 源码 / 工程</small></button>
+          <button type="button" id="tab-url" role="tab" aria-selected="false" aria-controls="panel-url" tabindex="-1" data-mode="url"><span>↗</span>提供网址<small>GitHub / 下载链接 / 网页</small></button>
+          <button type="button" id="tab-idea" role="tab" aria-selected="false" aria-controls="panel-idea" tabindex="-1" data-mode="idea"><span>✧</span>描述新功能<small>从需求开始</small></button>
+        </div>
+        <form id="task-form">
+          <div id="panel-upload" role="tabpanel" aria-labelledby="tab-upload" class="source-panel">
+            <label class="dropzone" id="dropzone" for="files"><span class="upload-symbol">↑</span><strong>拖入文件，或点击选择</strong><span>可上传安装包、ZIP / TAR 工程和相关附件</span><small>每个文件最高 1 GB，最多 20 个附件</small><input type="file" id="files" multiple></label>
+            <ul id="file-list" class="file-list" aria-label="已选择的文件"></ul>
+          </div>
+          <div id="panel-url" role="tabpanel" aria-labelledby="tab-url" class="source-panel" hidden><label class="field">工程或产品网址<input type="url" id="source-url" maxlength="2048" placeholder="https://github.com/owner/project" autocomplete="url"></label><p class="field-help">GitHub 仓库自动下载源码；直接链接下载文件；普通网页读取标题与下载入口。</p></div>
+          <div id="panel-idea" role="tabpanel" aria-labelledby="tab-idea" class="source-panel" hidden><div class="idea-note"><span>✧</span><div><strong>先描述你想做什么</strong><p>写下使用场景、需要的功能和预期效果。后续由主控拆解实现任务。</p></div></div></div>
+          <div id="details-assistant"></div>
+          <div class="requirements">
+            <label class="field">任务名称 <span class="required">必填</span><input id="task-title" required maxlength="120" placeholder="例如：文档管理系统增加全文搜索"></label>
+            <label class="field">问题与想实现的功能 <span class="required">必填</span><textarea id="description" required maxlength="20000" rows="6" placeholder="现在遇到了什么问题？&#10;如何复现？&#10;希望修改后能实现什么功能？"></textarea></label>
+            <label class="field">验收标准 <span class="optional">选填</span><textarea id="acceptance" maxlength="12000" rows="3" placeholder="例如：能搜索中文标题；无结果时显示提示；原有上传功能正常。"></textarea></label>
+            <label class="field">运行环境 <span class="optional">选填</span><textarea id="environment" maxlength="4000" rows="3" placeholder="例如：Windows 11 / Node.js 22；也可以暂时不填"></textarea></label>
+          </div>
+          <div id="form-error" role="alert" class="error" hidden></div>
+          <div id="transfer" class="transfer" role="status" hidden><span id="transfer-label">正在保存需求…</span><progress id="transfer-progress" max="100" value="0"></progress></div>
+          <footer class="form-footer"><span>先整理材料，再进入主控规划</span><button id="submit" class="primary" type="submit">创建并整理任务 <span>↗</span></button></footer>
+        </form>
+      </section>
+      <aside class="right-column">
+        <section class="flow-card"><div class="eyebrow">TASK PIPELINE</div><h2>接下来如何流转</h2><ol><li><span>01</span><div><strong>接收输入</strong><p>保留原文件、网址和功能描述</p></div></li><li><span>02</span><div><strong>整理工程与需求</strong><p>识别源码、安装包和工程清单</p></div></li><li><span>03</span><div><strong>交接 CodeAgent 主控</strong><p>准备需求、环境与验收条件</p></div></li><li class="pending"><span>04</span><div><strong>补全与自动化测试</strong><p>后续环节 · 以实际运行记录为准</p></div></li></ol><p class="flow-footnote">创建后可在任务中心查看和编辑。选择 AI 生成时会调用所选模型整理草稿。</p></section>
+        <section class="result-card" id="result" aria-labelledby="result-title" hidden><div class="result-heading"><div class="eyebrow">TASK RECORD</div><span id="result-status" class="status"></span></div><h2 id="result-title"></h2><p id="result-message" class="result-message" role="status" aria-live="polite"></p><code id="result-id"></code><div id="result-files"></div><div id="result-requirements"></div><ol id="events" class="events"></ol><a id="view-in-center" class="download">在任务中心查看详情 ↗</a><a id="download-handoff" class="download" hidden>↓ 下载任务交接单</a><button type="button" id="new-task" class="secondary">创建下一个任务 ＋</button></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

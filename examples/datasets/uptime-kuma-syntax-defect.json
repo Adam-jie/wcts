@@ -1,0 +1,36 @@
+{
+  "schema": "testfix.dataset-case.v1",
+  "id": "uptime-kuma-syntax-001",
+  "title": "Uptime Kuma complete repository: monitor module startup repair",
+  "track": "controlled_defect_repair",
+  "domain": "web",
+  "source": {
+    "repository": "https://github.com/louislam/uptime-kuma",
+    "commit": "124e79bce978ce29f0de681267b62b7d0d3d4429",
+    "license": "MIT"
+  },
+  "requirements": [
+    {
+      "id": "WEB-START-001",
+      "description": "Restore the complete Uptime Kuma application so its server can start and the monitoring module loads successfully.",
+      "expected": "The production bundle builds, server startup completes without JavaScript syntax errors, and the local application can serve its login/setup page in the frozen evaluation environment."
+    },
+    {
+      "id": "WEB-MONITOR-001",
+      "description": "Preserve existing HTTP status monitoring, keyword monitoring and JSON-query monitoring behavior while repairing startup.",
+      "expected": "With deterministic local HTTP fixtures, the existing monitoring behaviors distinguish matching responses from mismatches, failures and recovery; frozen existing and independent regression tests pass without edits."
+    }
+  ],
+  "allowed_changes": [
+    "server/model/monitor.js"
+  ],
+  "mutations": [
+    {
+      "kind": "replace_text",
+      "path": "server/model/monitor.js",
+      "expected_sha256": "9fe6d590bc78cd81dfa7743e8d3debd56dc3c4a086b7dfa69ba0ff52282bf026",
+      "old": "class Monitor extends BeanModel {",
+      "new": "class Monitor extends BeanModel ??? {"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 WCTP GraphExecutor calls event_callback(event, step_id, result). Conditional and
 Loop False values describe branch control, not test failures. Source provenance
-and the absent upstream code license are documented in THIRD_PARTY_NOTICES.md.
+and the absent upstream code license are documented in docs/prior-context.md.
 """
 from __future__ import annotations
 

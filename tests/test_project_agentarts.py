@@ -10,11 +10,63 @@ import pytest
 
 from testfix import agentarts_runtime as runtime
 from testfix import project_models
+from testfix.agentarts_probe import check_runtime
 from testfix.config import Settings
 from testfix.project_workflow import SCHEMAS
 
 
 CONTRACT = "testfix.project-skill.v1"
+
+
+def test_runtime_info_reports_exact_skill_catalog_without_credentials(tmp_path):
+    settings = Settings(root=tmp_path, base_url="https://model.example/v1", model="maas-model", api_key="very-secret")
+    result = runtime.handle_invocation({"contract_version": "testfix.runtime-info.v1"}, settings, "openai")
+    assert result["contract_version"] == "testfix.runtime-info.v1"
+    assert result["ready"] is True and result["model"] == "maas-model"
+    assert result["skill_catalog"] == project_models.load_catalog().snapshot()
+    assert "very-secret" not in json.dumps(result)
+
+
+def test_runtime_info_reports_missing_model_configuration(tmp_path):
+    result = runtime.handle_invocation({"contract_version": "testfix.runtime-info.v1"}, Settings(root=tmp_path), "openai")
+    assert result["ready"] is False and result["model"] is None
+
+
+def test_runtime_info_rejects_extra_client_fields():
+    with pytest.raises(ValueError, match="runtime-info"):
+        runtime.handle_invocation({"contract_version": "testfix.runtime-info.v1", "api_key": "client-secret"})
+
+
+def test_runtime_probe_validates_cloud_contract_catalog_and_model(tmp_path):
+    local = Settings(root=tmp_path, agentarts_url="https://runtime.example/invocations", agentarts_key="private-key")
+    body = runtime.handle_invocation({"contract_version": "testfix.runtime-info.v1"},
+                                     Settings(root=tmp_path, base_url="https://model.example/v1", model="maas-model", api_key="secret"), "openai")
+    captured = []
+    def transport(**kwargs):
+        captured.append(kwargs)
+        return {"ok": True, "body": body}
+    result = check_runtime(local, expected_model="maas-model", transport=transport)
+    assert result["ready"] is True and result["model"] == "maas-model"
+    assert result["skill_catalog_matches"] is True
+    assert captured[0]["payload"] == {"contract_version": "testfix.runtime-info.v1"}
+    assert captured[0]["headers"]["Authorization"] == "Bearer private-key"
+    assert "private-key" not in json.dumps(result)
+
+
+def test_runtime_probe_rejects_stale_skill_catalog(tmp_path):
+    local = Settings(root=tmp_path, agentarts_url="https://runtime.example/invocations", agentarts_key="private-key")
+    body = runtime.handle_invocation({"contract_version": "testfix.runtime-info.v1"},
+                                     Settings(root=tmp_path, base_url="https://model.example/v1", model="maas-model", api_key="secret"), "openai")
+    body["skill_catalog"]["files"]["catalog.json"] = "stale"
+    with pytest.raises(project_models.ProjectModelError, match="catalog"):
+        check_runtime(local, transport=lambda **_: {"ok": True, "body": body})
+
+
+def test_project_runtime_rejects_model_different_from_deployed_configuration(tmp_path, fake_upstream):
+    request = payload()
+    with pytest.raises(ValueError, match="configured Runtime model"):
+        runtime.handle_project_invocation(request, Settings(root=tmp_path, model="maas-model"), "openai")
+    assert fake_upstream.instances == []
 
 
 def payload(skill_id="plan-workflow"):

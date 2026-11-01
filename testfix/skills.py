@@ -18,7 +18,8 @@ CONTRACT_SCHEMA = "testfix.skill.v1"
 SNAPSHOT_SCHEMA = "testfix.skill-snapshot.v1"
 DEFAULT_CATALOG = Path(__file__).parent / "skill_library" / "catalog.json"
 LEGACY_PROFILES = frozenset({"pure_python", "flaskr_project"})
-PROFILES = LEGACY_PROFILES | {"python_package"}
+PACKAGE_PROFILES = LEGACY_PROFILES | {"python_package"}
+PROFILES = PACKAGE_PROFILES | {"python_application"}
 ROLES = frozenset({"requirements", "tester", "diagnosis", "developer", "reviewer"})
 PROTECTED_RESOURCES = frozenset({"independent_acceptance", "regression_tests", "reference_solution"})
 HIDDEN_RESOURCES = frozenset({"independent_acceptance", "reference_solution"})
@@ -30,12 +31,16 @@ MINIMUM_GATES = {
     "python_package": frozenset({"paired_test_ids", "source_binding", "original_regression", "generated_tests",
                                  "independent_acceptance", "protected_hashes", "review_hash", "wheel_build",
                                  "real_cli"}),
+    "python_application": frozenset({"paired_test_ids", "source_binding", "original_regression", "generated_tests",
+                                     "independent_acceptance", "protected_hashes", "review_hash", "archive_build",
+                                     "real_http", "sqlite_restart"}),
 }
 _PURE_CORE = ("analyze-requirements", "generate-tests", "diagnose-results", "repair-code", "review-patch", "verify-delivery")
 MINIMUM_SKILLS = {
     "pure_python": _PURE_CORE,
     "flaskr_project": ("plan-workflow", "explore-repository", "ground-code") + _PURE_CORE,
     "python_package": ("plan-workflow", "explore-repository", "ground-code") + _PURE_CORE,
+    "python_application": ("plan-workflow", "explore-repository", "ground-code") + _PURE_CORE,
 }
 _ID = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 
@@ -177,7 +182,7 @@ class SkillCatalog:
             _fail("invalid_schema", "Each existing role must map to a distinct Skill")
         # v1/v1.1 snapshots remain valid with their original two profiles. The
         # v1.2 catalog must explicitly declare the package/CLI delivery scope.
-        expected_profiles = PROFILES if catalog["version"] == "1.2.0" else LEGACY_PROFILES
+        expected_profiles = PROFILES if catalog['version'] == '1.3.0' else PACKAGE_PROFILES if catalog["version"] == "1.2.0" else LEGACY_PROFILES
         _object(catalog["profiles"], set(expected_profiles), "catalog.profiles")
         for profile, definition in catalog["profiles"].items():
             _object(definition, {"required_skills", "protected_resources", "required_gates"}, f"profile {profile}")
@@ -199,7 +204,7 @@ class SkillCatalog:
             _fail("unknown_schema", f"Unsupported contract schema for {skill_id}")
         if contract["id"] != skill_id:
             _fail("id_mismatch", f"Contract id must match {skill_id}")
-        if contract["version"] not in {"1.0.0", "1.1.0", "1.2.0"}:
+        if contract["version"] not in {"1.0.0", "1.1.0", "1.2.0", "1.3.0"}:
             _fail("unknown_schema", f"Unsupported contract version for {skill_id}")
         if not isinstance(contract["kind"], str) or contract["kind"] not in {"llm", "deterministic"}:
             _fail("invalid_schema", f"{skill_id}.kind must be llm or deterministic")

@@ -1,0 +1,17 @@
+{
+  "device": {"kind": "http", "name": "本机 HTTP 协议模拟器", "base_url": "http://127.0.0.1:9188"},
+  "requirements": [
+    {"id": "led-state", "description": "读取指示灯状态字段", "expected": "led 字段必须为 true", "category": "functional"},
+    {"id": "temperature", "description": "读取固定模拟温度", "expected": "temperature 字段必须为 25", "category": "functional"}
+  ],
+  "allowed_actions": [
+    {"kind": "http", "id": "read-led", "function_id": "led-state", "description": "读取状态并核对指示灯字段", "method": "GET", "path": "/status", "timeout_s": 5,
+     "assertions": [{"kind": "status_code", "expected": 200}, {"kind": "json_equals", "path": ["led"], "expected": true}]},
+    {"kind": "http", "id": "read-temperature", "function_id": "temperature", "description": "读取状态并核对固定温度", "method": "GET", "path": "/status", "timeout_s": 5,
+     "assertions": [{"kind": "json_equals", "path": ["temperature"], "expected": 25}]}
+  ],
+  "plan": {"steps": [
+    {"id": "step-01", "function_id": "led-state", "action_id": "read-led", "assertions": [{"kind": "status_code", "expected": 200}, {"kind": "json_equals", "path": ["led"], "expected": true}]},
+    {"id": "step-02", "function_id": "temperature", "action_id": "read-temperature", "assertions": [{"kind": "json_equals", "path": ["temperature"], "expected": 25}]}
+  ]}
+}

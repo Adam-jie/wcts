@@ -1,14 +1,15 @@
 {
   "schema_version": "testfix.skill.v1",
   "id": "analyze-requirements",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "kind": "llm",
   "role": "requirements",
   "paper_capability": "SD",
   "profiles": [
     "pure_python",
     "flaskr_project",
-    "python_package"
+    "python_package",
+    "python_application"
   ],
   "inputs": [
     "public_requirements",

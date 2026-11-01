@@ -20,7 +20,7 @@ from test_project_workflow import (
 )
 from testfix import project_workflow as workflow
 from testfix.project_models import _validate_schema, reject_protected_context
-from testfix.team_runtime import ACTION_SCHEMA, execute_team_round
+from testfix.team_runtime import ACTION_SCHEMA, MANAGER_GATE_SCHEMA, execute_team_round
 
 
 def employee_action(operation, *, path='', baseline='', files=None, message='Synthetic employee observation'):
@@ -38,6 +38,10 @@ class TeamBoundaryProvider(BoundaryProvider):
         self.planning_calls = 0
         self.employee_tests = False
         self.repeat_tests = False
+        self.reject_first_handoff = False
+        self.reject_all_handoffs = False
+        self.inconsistent_first_handoff = False
+        self.gate_calls = []
 
     def team_plan(self, context):
         number = context.get('business_round', 1)
@@ -59,6 +63,23 @@ class TeamBoundaryProvider(BoundaryProvider):
         }
 
     def invoke(self, skill, context, schema, *, timeout_s, token_cap):
+        if 'manager_gate' in context:
+            assert skill == 'plan-workflow' and schema == MANAGER_GATE_SCHEMA
+            reject_protected_context(context)
+            task_id = context['manager_gate']['task']['id']
+            self.gate_calls.append(task_id)
+            rejected = self.reject_all_handoffs or self.reject_first_handoff and len(self.gate_calls) == 1
+            output = {'ready': not rejected, 'reason': 'Need a clearer handoff' if rejected else 'Evidence reviewed',
+                      'missing': ['Clarify the observation'] if rejected else []}
+            if self.inconsistent_first_handoff and len(self.gate_calls) == 1:
+                output['missing'] = ['Later independent tests remain to be run']
+            elif self.inconsistent_first_handoff and len(self.gate_calls) == 2:
+                assert context['manager_gate']['observations'][-1]['action'] == 'manager_output_validation'
+            self.calls.append({'skill_id': skill, 'provider': 'injected-unit-boundary-fixture',
+                               'real_model_executed': False, 'synthetic': True,
+                               'usage': {'total_tokens': self.reported_tokens}, 'status': 'completed',
+                               'result': deepcopy(output)})
+            return output
         if 'assigned_task' not in context:
             output = super().invoke(skill, context, workflow.SCHEMAS[skill],
                                     timeout_s=timeout_s, token_cap=token_cap)
@@ -157,6 +178,8 @@ def test_manager_employee_handoffs_use_real_workspace_and_retain_nine_gates(harn
     assert schedule['order'] == ['inspect-1', 'implement-1']
     revision = result['collaboration']['rounds'][0]
     assert set(revision['handoffs']) == {'inspect-1', 'implement-1'}
+    assert provider.gate_calls == ['inspect-1', 'implement-1']
+    assert all(item['manager_check']['ready'] for item in revision['handoffs'].values())
     assert [item['kind'] for item in revision['messages']].count('assignment') == 2
     assert [item['kind'] for item in revision['messages']].count('handoff') == 2
     documents = step_documents(harness, result)
@@ -190,6 +213,88 @@ def test_manager_employee_handoffs_use_real_workspace_and_retain_nine_gates(harn
     assert repair_context['dependency_outputs']['inspect-1']['message'] == 'Actual public fixture VALUE observed'
 
 
+def test_manager_rejects_incomplete_handoff_before_downstream_assignment(harness):
+    provider = TeamBoundaryProvider()
+    provider.reject_first_handoff = True
+    result, provider, _ = execute_team(harness, provider=provider)
+    assert result['status'] == 'completed', result.get('error')
+    assert provider.gate_calls == ['inspect-1', 'inspect-1', 'implement-1']
+    revision = result['collaboration']['rounds'][0]
+    messages = revision['messages']
+    checks = [i for i, item in enumerate(messages) if item['kind'] == 'handoff_check']
+    next_assignment = next(i for i, item in enumerate(messages)
+                           if item['kind'] == 'assignment' and item['content']['id'] == 'implement-1')
+    assert messages[checks[0]]['content']['ready'] is False
+    assert messages[checks[1]]['content']['ready'] is True
+    assert checks[1] < next_assignment
+    observations = [item['context']['observations'] for item in provider.invocations
+                    if item['context'].get('assigned_task', {}).get('id') == 'inspect-1']
+    assert any(any(step['action'] == 'manager_check' for step in value) for value in observations)
+
+
+def test_unresolved_manager_rejection_never_releases_downstream(harness):
+    provider = TeamBoundaryProvider()
+    provider.reject_all_handoffs = True
+    result, provider, tools = execute_team(harness, provider=provider)
+    assert result['status'] == 'failed'
+    assert 'exhausted bounded action loop' in result['error']
+    assert set(provider.gate_calls) == {'inspect-1'}
+    assert all(item['context'].get('assigned_task', {}).get('id') != 'implement-1'
+               for item in provider.invocations)
+    assert all(operation != 'verify' for operation, _, _ in tools.calls)
+
+
+def test_inconsistent_manager_output_is_corrected_before_handoff(harness):
+    provider = TeamBoundaryProvider()
+    provider.inconsistent_first_handoff = True
+    result, provider, _ = execute_team(harness, provider=provider)
+    assert result['status'] == 'completed', result.get('error')
+    assert provider.gate_calls == ['inspect-1', 'inspect-1', 'implement-1']
+    handoff = result['collaboration']['rounds'][0]['handoffs']['inspect-1']
+    assert handoff['manager_check']['ready'] and not handoff['manager_check']['missing']
+
+
+def test_manager_error_leaves_handoff_pending_and_blocks_dependents(harness):
+    class UnavailableManager(TeamBoundaryProvider):
+        def invoke(self, skill, context, schema, **kwargs):
+            if 'manager_gate' in context:
+                raise ValueError('manager service unavailable')
+            return super().invoke(skill, context, schema, **kwargs)
+
+    result, provider, _ = execute_team(harness, provider=UnavailableManager())
+    assert result['status'] == 'failed'
+    revision = result['collaboration']['rounds'][0]
+    assert revision['employees'][0]['status'] == 'awaiting_manager'
+    assert 'handoffs' not in revision
+    assert all(item['context'].get('assigned_task', {}).get('id') != 'implement-1'
+               for item in provider.invocations)
+
+
+def test_unchanged_module_can_handoff_before_other_worker_patches(harness):
+    class NoOpProvider(TeamBoundaryProvider):
+        def team_plan(self, context):
+            result = super().team_plan(context)
+            result['work_items'].insert(1, {'id': 'api-check', 'title': 'Inspect API and preserve behavior',
+                'skill_id': 'repair-code', 'requirement_ids': context['requirement_ids'],
+                'depends_on': ['inspect-1'], 'paths': ['flaskr/app.py']})
+            result['work_items'][-1]['depends_on'] = ['api-check']
+            return result
+
+        def invoke(self, skill, context, schema, **kwargs):
+            if context.get('assigned_task', {}).get('id') != 'api-check':
+                return super().invoke(skill, context, schema, **kwargs)
+            action = employee_action('finish', message='No API change needed; tests have not run') if context['observations'] else employee_action('read_file', path='flaskr/app.py')
+            self.calls.append({'skill_id': skill, 'provider': 'synthetic', 'status': 'completed',
+                               'usage': {'total_tokens': 1}, 'result': deepcopy(action)})
+            return action
+
+    result, provider, tools = execute_team(harness, provider=NoOpProvider())
+    assert result['status'] == 'completed', result.get('error')
+    revision = result['collaboration']['rounds'][0]
+    assert revision['handoffs']['api-check']['manager_check']['ready']
+    assert [operation for operation, _, _ in tools.calls] == ['baseline_public', 'candidate_public', 'verify']
+
+
 def test_employee_public_test_observation_returns_to_same_repair_agent(harness):
     provider = TeamBoundaryProvider()
     provider.employee_tests = True
@@ -202,6 +307,36 @@ def test_employee_public_test_observation_returns_to_same_repair_agent(harness):
     repair_calls = [item for item in provider.invocations if item['skill'] == 'repair-code']
     assert repair_calls[-1]['context']['observations'][-1]['action'] == 'run_public_tests'
     assert repair_calls[-1]['context']['observations'][-1]['result']['generated']['successful'] is True
+
+
+def test_integration_worker_can_report_no_further_patch_after_public_check(harness):
+    class IntegrationProvider(TeamBoundaryProvider):
+        def team_plan(self, context):
+            result = super().team_plan(context)
+            result['work_items'].append({'id': 'integration', 'title': 'Inspect integration',
+                'skill_id': 'repair-code', 'requirement_ids': context['requirement_ids'],
+                'depends_on': ['implement-1'], 'paths': ['flaskr/app.py']})
+            return result
+
+        def invoke(self, skill, context, schema, *, timeout_s, token_cap):
+            if context.get('assigned_task', {}).get('id') != 'integration':
+                return super().invoke(skill, context, schema, timeout_s=timeout_s, token_cap=token_cap)
+            actions = [employee_action('read_file', path='flaskr/app.py'),
+                       employee_action('run_public_tests'),
+                       employee_action('finish', message='No additional patch needed')]
+            action = actions[len(context['observations'])]
+            self.invocations.append({'skill': skill, 'context': deepcopy(context), 'token_cap': token_cap})
+            self.calls.append({'skill_id': skill, 'provider': 'injected-unit-boundary-fixture',
+                'real_model_executed': False, 'synthetic': True, 'usage': {'total_tokens': self.reported_tokens},
+                'status': 'completed', 'result': deepcopy(action)})
+            return action
+
+    result, provider, tools = execute_team(harness, provider=IntegrationProvider())
+    assert result['status'] == 'completed', result.get('error')
+    documents = step_documents(harness, result)
+    steps = [item for item in documents if item['task_id'] == 'integration']
+    assert [step['action']['action'] for step in steps] == ['read_file', 'run_public_tests', 'finish']
+    assert steps[-1]['observation']['ok'] and not steps[-1]['observation']['result']['verified_implementation']
 
 
 def test_employee_cannot_exceed_two_public_test_calls_or_skip_final_patch(harness):
@@ -230,6 +365,7 @@ def test_failed_public_check_replans_from_observed_handoffs_and_current_source(h
         ['inspect-1', 'implement-1'], ['inspect-2', 'implement-2']]
     planner_context = [item['context'] for item in provider.invocations if item['skill'] == 'plan-workflow'][1]
     assert planner_context['business_round'] == 2
+    assert planner_context['remaining_skill_invocations']['plan-workflow'] > 0
     assert planner_context['manager_feedback']['generated']['successful'] is False
     assert set(planner_context['previous_employee_handoffs']) == {'inspect-1', 'implement-1'}
     assert planner_context['sources']['flaskr/app.py'] == 'VALUE = 1\n'
@@ -253,6 +389,16 @@ def test_uncovered_user_request_cannot_start_employee_or_public_test(harness):
     assert tools.calls == []
     assert all(item['skill'] == 'plan-workflow' for item in provider.invocations)
     assert result['collaboration']['rounds'] == []
+
+
+def test_stale_patch_feedback_contains_current_candidate_hash(harness):
+    provider = TeamBoundaryProvider()
+    provider.attack = 'stale_hash'
+    result, _, _ = execute_team(harness, provider=provider)
+    assert result['status'] == 'failed'
+    rejected = [item for item in step_documents(harness, result)
+                if item['action']['action'] == 'apply_patch' and not item['observation']['ok']]
+    assert rejected and rejected[0]['inference_candidate_sha256'] in rejected[0]['observation']['error']
 
 
 @pytest.mark.parametrize(('attack', 'error_fragment'), [
@@ -320,4 +466,45 @@ def test_employee_step_limit_does_not_invent_completion(harness):
     assert len(calls) == 2
     assert ledger['rounds'][0]['employees'][0]['status'] == 'incomplete'
     assert workspace.candidate_hash() == before
+    workspace.assert_integrity()
+
+
+def test_indexed_large_project_reads_and_edits_real_assigned_source(harness):
+    from testfix.project_tools import ProjectWorkspace, files_under
+    source = Path(harness.project['baseline'])
+    target = source / 'flaskr/app.py'
+    target.write_text('# padding\n' * 9000 + 'VALUE = 0\n', encoding='utf-8')
+    (source / 'flaskr/other.py').write_text('# unrelated\n' * 20000, encoding='utf-8')
+    harness.project['source']['files'] = files_under(source)
+    harness.project['context_mode'] = 'indexed'
+    workspace = ProjectWorkspace(harness.settings, harness.run['id'], harness.project)
+    snapshot = workspace.snapshot()
+    assert snapshot['source_context']['mode'] == 'indexed_excerpts'
+    assert len(snapshot['sources']['flaskr/app.py']) < len(target.read_text(encoding='utf-8'))
+    plan = TeamBoundaryProvider().team_plan({'requirement_ids': ['MINI-VALUE']})
+    ledger = {'request': 'Update the value in the actual assigned file', 'rounds': []}
+
+    def decide(skill, context, schema):
+        observed = context['observations']
+        if not observed:
+            action = employee_action('read_file', path='flaskr/app.py')
+            action['start_line'] = 9001
+            return action
+        assert observed[0]['result']['text'] == 'VALUE = 0'
+        if skill == 'explore-repository':
+            return employee_action('finish')
+        action = employee_action('apply_edit', baseline=workspace.candidate_hash(),
+                                 files=[{'path':'flaskr/app.py', 'source':'VALUE = 1'}])
+        action['query'] = 'VALUE = 0'
+        return action
+
+    output, result = execute_team_round(workspace, plan,
+        {'status':'OPTIMAL', 'order':['inspect-1','implement-1']}, call=decide,
+        public_test=lambda: pytest.fail('No test is requested'), emit=lambda *args: None,
+        ledger=ledger, round_number=1,
+        manager_check=lambda *args: {'ready':True, 'reason':'Observed task evidence', 'missing':[]})
+    assert result['changed_files'] == ['flaskr/app.py']
+    assert (workspace.candidate/'flaskr/app.py').read_text(encoding='utf-8').endswith('VALUE = 1\n')
+    assert target.read_text(encoding='utf-8').endswith('VALUE = 0\n')
+    assert ledger['rounds'][0]['handoffs']['implement-1']['manager_check']['ready']
     workspace.assert_integrity()

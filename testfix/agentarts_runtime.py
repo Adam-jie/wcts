@@ -8,9 +8,34 @@ from .config import Settings, load_settings
 from .providers import ModelProvider, SCHEMAS
 
 CONTRACT_VERSION = "testfix.role.v1"
+RUNTIME_INFO_CONTRACT = "testfix.runtime-info.v1"
+
+
+def runtime_info(payload: dict, settings: Settings | None = None, provider_name: str | None = None) -> dict:
+    """Report deployment compatibility without returning credentials or invoking a model."""
+    if not isinstance(payload, dict) or set(payload) != {"contract_version"}:
+        raise ValueError("Invalid runtime-info request")
+    from .skills import load_catalog
+    settings = settings or load_settings()
+    provider_name = provider_name or os.getenv("TESTFIX_RUNTIME_PROVIDER", "openai")
+    if provider_name == "openai":
+        model = settings.model or None
+        ready = bool(settings.base_url and settings.model and settings.api_key)
+    elif provider_name == "ollama":
+        model = settings.ollama_model or None
+        ready = bool(settings.ollama_url and settings.ollama_model)
+    else:
+        model, ready = None, False
+    return {"contract_version": RUNTIME_INFO_CONTRACT, "ready": ready, "model": model,
+            "upstream": provider_name if provider_name in {"openai", "ollama"} else "unsupported",
+            "supported_contracts": [CONTRACT_VERSION, "testfix.project-skill.v1"],
+            "profiles": ["flaskr_project", "python_package"],
+            "skill_catalog": load_catalog().snapshot()}
 
 
 def handle_invocation(payload: dict, settings: Settings | None = None, provider_name: str | None = None) -> dict:
+    if isinstance(payload, dict) and payload.get("contract_version") == RUNTIME_INFO_CONTRACT:
+        return runtime_info(payload, settings, provider_name)
     if isinstance(payload,dict) and payload.get('contract_version') == 'testfix.project-skill.v1':
         return handle_project_invocation(payload,settings,provider_name)
     if not isinstance(payload, dict) or payload.get("contract_version") != CONTRACT_VERSION:
@@ -41,20 +66,46 @@ def handle_project_invocation(payload: dict, settings: Settings | None = None, p
     if payload.get('contract_version') != PROJECT_CONTRACT or not isinstance(payload.get('profile'),str) or payload['profile'] not in {'flaskr_project','python_package'}:
         raise ValueError('Runtime requires testfix.project-skill.v1 and a registered complete-project profile')
     skill = payload.get('skill_id')
-    if not isinstance(skill,str) or skill not in SCHEMAS or payload.get('output_schema') != SCHEMAS[skill]:
+    if not isinstance(skill,str) or skill not in SCHEMAS:
         raise ValueError('Runtime only accepts a registered Skill and its fixed output schema')
     context = payload.get('context')
     if not isinstance(context,dict):
         raise ValueError('Runtime context must be an object')
     reject_protected_context(context)
+    expected_schema = SCHEMAS[skill]
+    if 'assigned_task' in context:
+        from .project_models import _validate_schema
+        from .specialists import SpecialistCatalog
+        from .team_planning import TEAM_PLAN_SCHEMA
+        from .team_runtime import ACTION_SCHEMA
+        assigned = context['assigned_task']
+        _validate_schema(assigned, TEAM_PLAN_SCHEMA['properties']['work_items']['items'])
+        if skill not in {'repair-code','explore-repository'} or assigned['skill_id'] != skill:
+            raise ValueError('Runtime employee must use its registered core Skill')
+        if payload.get('specialist_catalog') != SpecialistCatalog().snapshot():
+            raise ValueError('Runtime specialist catalog does not match the client snapshot')
+        expected_schema = ACTION_SCHEMA
+    elif skill == 'generate-tests' and context.get('test_quality_review') is True:
+        from .test_quality import AUDIT_SCHEMA
+        expected_schema = AUDIT_SCHEMA
+    elif skill == 'plan-workflow' and context.get('user_request'):
+        from .project_workflow import obj
+        from .team_planning import TEAM_PLAN_SCHEMA
+        expected_schema = obj({**SCHEMAS[skill]['properties'], 'team_plan': TEAM_PLAN_SCHEMA})
+    if payload.get('output_schema') != expected_schema:
+        raise ValueError('Runtime only accepts a registered Skill and its fixed output schema')
     provider_name = provider_name or os.getenv('TESTFIX_RUNTIME_PROVIDER','openai')
     if provider_name not in {'openai','ollama','codex_cli'}:
         raise ValueError('Runtime requires a real upstream transport; recursion/replay forbidden')
     settings = settings or load_settings()
+    configured_model = settings.model if provider_name == 'openai' else settings.ollama_model if provider_name == 'ollama' else None
+    if configured_model and payload.get('model') != configured_model:
+        raise ValueError('Requested model does not match the configured Runtime model')
     provider = ProjectModelProvider(provider_name,settings,model=payload.get('model','gpt-5.6-sol'),profile=payload['profile'])
-    result = provider.invoke(skill,context,SCHEMAS[skill],token_cap=payload.get('max_tokens',4096))
+    result = provider.invoke(skill,context,expected_schema,token_cap=payload.get('max_tokens',4096))
     trace = provider.calls[-1]
     return {'contract_version':PROJECT_CONTRACT,'result':result,'usage':trace.get('usage'),
             'model':trace.get('actual_model'),'requested_model':trace.get('requested_model'),
-            'model_evidence':trace.get('model_evidence'),'skill_catalog':provider.metadata().get('skill_catalog')}
+            'model_evidence':trace.get('model_evidence'),'skill_catalog':provider.metadata().get('skill_catalog'),
+            'specialist_catalog':provider.metadata().get('specialist_catalog')}
 

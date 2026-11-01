@@ -15,6 +15,7 @@ import re
 import signal
 import stat
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
@@ -129,18 +130,20 @@ def _run_bounded(command: list[str], *, cwd: Path, timeout_s: float, stdin: str 
 
 def run_package_suite(python: Path, project: Path, tests: Path, directory: Path, name: str, config: dict) -> dict:
     directory.mkdir(parents=True, exist_ok=True)
-    stem = name + '-' + uuid.uuid4().hex
+    stem = name + '-' + uuid.uuid4().hex[:12]
     xml, binding = directory / (stem + '.xml'), directory / (stem + '.binding.json')
     stdout, stderr = directory / (stem + '.stdout.txt'), directory / (stem + '.stderr.txt')
     worker = Path(__file__).with_name('package_pytest_worker.py').resolve()
     # Bind collection identity to the sealed suite itself. Repository/candidate
     # directories are execution locations, never part of a test's identity.
     suite_root = tests if tests.is_dir() else tests.parent
-    command = [str(python), '-I', '-B', '-X', 'utf8', str(worker), '--project', str(project), '--source-root', config['source_root'],
-               '--package', config['package'], '--binding-json', str(binding), '--', '-q', '-p', 'no:cacheprovider',
-               '--rootdir', str(suite_root), '--basetemp', str(directory / (stem + '-tmp')), '--junitxml', str(xml), str(tests)]
-    process = _run_bounded(command, cwd=project, timeout_s=90,
-                           environment={'COLUMNS': '200', 'LINES': '60'})
+    # SQLite on Windows cannot reliably open database files under long artifact paths.
+    with tempfile.TemporaryDirectory(prefix='tf-') as temporary:
+        command = [str(python), '-I', '-B', '-X', 'utf8', str(worker), '--project', str(project), '--source-root', config['source_root'],
+                   '--package', config['package'], '--binding-json', str(binding), '--', '-q', '-p', 'no:cacheprovider',
+                   '--rootdir', str(suite_root), '--basetemp', temporary, '--junitxml', str(xml), str(tests)]
+        process = _run_bounded(command, cwd=project, timeout_s=90,
+                               environment={'COLUMNS': '200', 'LINES': '60'})
     stdout.write_text(process['stdout'], encoding='utf-8')
     stderr.write_text(process['stderr'], encoding='utf-8')
     records, collection_errors, parse_error, binding_error, evidence = [], 0, '', '', {}
@@ -364,17 +367,28 @@ def run_package_operation(request: dict, guard) -> dict:
     operation = request['operation']
     result = {'operation': operation, 'candidate_sha256': candidate_hash,
               'limits': {'backend': guard.backend, 'memory_bytes': guard.memory_bytes, 'cpu_seconds': guard.cpu_seconds}}
+    from .wctp_case import run_test_actions, successful, functional_failure, delivery_success
     if operation in {'baseline_public', 'candidate_public'}:
         project = paths['baseline'] if operation == 'baseline_public' else paths['candidate']
         upstream = _inside(project, project / 'tests')
-        result['upstream_regression'] = run_package_suite(paths['python'], project, upstream, directory, operation + '-upstream', config)
-        result['behavior_regression'] = run_package_suite(paths['python'], project, regression, directory, operation + '-behavior', config)
+        values, result['wctp'] = run_test_actions(directory, operation, {
+            'step_Upstream': ('上游原有回归', lambda: run_package_suite(paths['python'], project, upstream, directory, operation + '-upstream', config), successful, '上游回归全部通过'),
+            'step_Behavior': ('冻结行为回归', lambda: run_package_suite(paths['python'], project, regression, directory, operation + '-behavior', config), successful, '行为回归全部通过'),
+            'step_Generated': ('模型测试 · 原版对照' if operation == 'baseline_public' else '模型测试 · 修改版',
+                lambda: run_package_suite(paths['python'], project, paths['generated'], directory, operation + '-generated', config),
+                functional_failure if operation == 'baseline_public' else successful,
+                '真实功能断言失败' if operation == 'baseline_public' else '冻结测试全部通过'),
+        })
+        result['upstream_regression'], result['behavior_regression'] = values['step_Upstream'], values['step_Behavior']
         result['regression'] = _merge_regression(result['upstream_regression'], result['behavior_regression'], directory, operation)
-        result['generated'] = run_package_suite(paths['python'], project, paths['generated'], directory, operation + '-generated', config)
+        result['generated'] = values['step_Generated']
     elif operation == 'verify':
-        result['baseline'] = run_package_suite(paths['python'], paths['baseline'], paths['acceptance'], directory, 'independent-baseline', config)
-        result['acceptance'] = run_package_suite(paths['python'], paths['candidate'], paths['acceptance'], directory, 'independent-candidate', config)
-        result['delivery'] = verify_package_delivery(paths['python'], paths['candidate'], directory / 'delivery', config)
+        values, result['wctp'] = run_test_actions(directory, operation, {
+            'step_Baseline': ('原版独立验收对照', lambda: run_package_suite(paths['python'], paths['baseline'], paths['acceptance'], directory, 'independent-baseline', config), functional_failure, '原版暴露功能缺口'),
+            'step_Acceptance': ('修改版独立验收', lambda: run_package_suite(paths['python'], paths['candidate'], paths['acceptance'], directory, 'independent-candidate', config), successful, '独立验收全部通过'),
+            'step_Delivery': ('构建与真实 CLI', lambda: verify_package_delivery(paths['python'], paths['candidate'], directory / 'delivery', config), delivery_success, '构建与产品检查全部通过'),
+        })
+        result['baseline'], result['acceptance'], result['delivery'] = values['step_Baseline'], values['step_Acceptance'], values['step_Delivery']
     else:
         raise ValueError('Unknown fixed package operation')
     paths['output'].write_text(json.dumps(result, ensure_ascii=False, allow_nan=False), encoding='utf-8')

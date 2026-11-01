@@ -180,6 +180,40 @@ def test_same_file_writers_hold_ownership_until_handoff(workspace, source_root):
     assert 'Synthetic first' in second[0]['observation']['result']['text']
 
 
+def test_joint_solver_dispatches_more_than_four_tasks_and_binds_actual_worker_context(workspace, source_root):
+    plan = plan_for(workspace, *(task('task'+str(i), [LEFT if i%2 else RIGHT]) for i in range(6)))
+    callback = SyntheticEmployee(workspace)
+    run, ledger, _ = execute(workspace, source_root, plan, callback)
+    run()
+    revision = ledger['rounds'][0]
+    assert len(revision['handoffs']) == 6 and len(revision['allocation_plans']) >= 2
+    assert all(allocation['status'] in {'OPTIMAL','FEASIBLE'} for allocation in revision['allocation_plans'])
+    for call in callback.calls:
+        selected = call['context']['selected_worker']
+        employee = next(e for e in revision['employees'] if e['task_id']==call['id'])
+        assert selected['worker_id'] == employee['worker_id']
+        assert selected['strategy'] == employee['execution_strategy']
+    verify_team_evidence(ledger, workspace)
+
+
+def test_active_task_uses_residual_allowances_after_an_accounted_read(workspace,source_root):
+    plan=plan_for(workspace,task('impl',[LEFT]))
+    schedule=solve_team_plan(plan,wall_seconds=180,token_limit=24000,model_slots=1)
+    usage={'reads':0}
+    def charge(assigned,context,proposed):
+        if proposed['action']=='read_file':usage['reads']+=1
+    ledger={'request':'Synthetic residual-budget regression'}
+    execute_team_round(workspace,plan,schedule,call=SyntheticEmployee(workspace,hook=charge),
+        public_test=lambda:{},emit=lambda *args:None,ledger=ledger,round_number=1,wctp_root=source_root,
+        remaining_budget=lambda:{'wall_seconds':180-usage['reads'],'token_limit':24000-100*usage['reads'],
+                                  'task_accounted_tokens':{'impl':100*usage['reads']}})
+    allocation=ledger['rounds'][0]['allocation_plans'][1]
+    assert allocation['status']=='OPTIMAL'
+    assert allocation['assignments']['impl']['token_cap']==23900
+    assert allocation['assignments']['impl']['duration_seconds']<=179
+    assert ledger['rounds'][0]['employees'][0]['status']=='handed_off'
+
+
 def test_employee_fork_join_receives_only_completed_dependency_handoffs(workspace, source_root):
     plan = plan_for(workspace,
         task('inspect', [LEFT, RIGHT], skill='explore-repository'),
@@ -231,7 +265,11 @@ def test_wrong_baseline_is_rejected_even_when_a_disjoint_patch_can_rebase(worksp
     assert (workspace.candidate / RIGHT).read_text(encoding='utf-8') == 'VALUE = 0\n'
     rejected = next(record for record in receipts(workspace, ledger)
                     if record['task_id'] == 'right' and record['action']['action'] == 'apply_patch')
-    assert rejected['observation'] == {'ok': False, 'error': 'Patch proposal uses a stale candidate version'}
+    assert rejected['observation'] == {
+        'ok': False,
+        'error': 'Patch proposal uses a stale candidate version; copy the current candidate_sha256 exactly: '
+                 + rejected['inference_candidate_sha256'],
+    }
     assert 'right' not in ledger['rounds'][0].get('handoffs', {})
     assert ledger['rounds'][0].get('status') != 'accepted'
 

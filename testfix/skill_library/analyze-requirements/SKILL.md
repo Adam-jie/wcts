@@ -2,7 +2,7 @@
 name: analyze-requirements
 description: 对照公开功能描述和当前实现，形成可观察的验收条件与缺口；对应 requirements 角色。
 metadata:
-  contract-version: "1.2.0"
+  contract-version: "1.3.0"
   contract-ref: "references/contract.json"
 ---
 
@@ -19,3 +19,5 @@ metadata:
 只写需求产物。不得读取独立验收源码或参考答案，也不得通过改写需求使失败变成通过。公开描述不足以决定行为时明确假设和影响，不生成隐藏测试的猜测。
 
 读取 [机器契约](references/contract.json) 确认前置输入、资源和反馈格式。
+
+`python_application` 用于已登记的独立 Python Web 应用。依据 public_runtime 和当前公开需求执行，不沿用 Flaskr 或 rich-cli 的专有业务约定；允许修改的文件由 scope_manifest 决定。测试使用真实应用接口或公开函数，禁止调用外部命令或改写导入路径。最终必须通过同一组冻结测试、原有回归、独立验收、源码 ZIP 构建、真实 HTTP 与 SQLite 重启检查。该 profile 不要求 wheel，archive_build 是单独记录的源码交付关卡。

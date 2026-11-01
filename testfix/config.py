@@ -8,6 +8,8 @@ from pathlib import Path
 from dotenv import dotenv_values, load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_CODEX_MODEL = "gpt-5.6-luna"
+CODEX_PROJECT_MODELS = {DEFAULT_CODEX_MODEL, "gpt-5.6-sol"}
 
 
 @dataclass(frozen=True)

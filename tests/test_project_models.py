@@ -21,10 +21,29 @@ SCHEMA = {"type": "object", "properties": {"summary": {"type": "string"}},
 _HTTP_CLIENT = httpx.Client
 
 
+def test_codex_discovery_prefers_path_without_reading_login_files(monkeypatch):
+    monkeypatch.setattr(module.shutil, 'which', lambda _: 'explicit-cli')
+    assert module.resolve_codex_executable() == 'explicit-cli'
+
+
+@pytest.mark.skipif(module.os.name != 'nt', reason='Windows desktop binary layout')
+def test_desktop_codex_discovery_works_without_shell_path(monkeypatch, tmp_path):
+    monkeypatch.setattr(module.shutil, 'which', lambda _: None)
+    monkeypatch.setenv('LOCALAPPDATA', str(tmp_path))
+    assert module.resolve_codex_executable() is None
+    binary = tmp_path / 'OpenAI/Codex/bin/installed-version/codex.exe'
+    binary.parent.mkdir(parents=True)
+    binary.write_bytes(b'fixture-only-never-executed')
+    assert Path(module.resolve_codex_executable()) == binary
+    # Construction and availability must use the same discovery result.
+    assert ProjectModelProvider('codex_cli', Settings(root=tmp_path)).codex_executable == str(binary)
+
+
 def provider(tmp_path, name="openai", **kwargs):
     settings = Settings(root=tmp_path, base_url="https://model.example/v1", api_key="private-project-credential",
                         agentarts_url="https://runtime.example/invocations", agentarts_key="private-runtime-credential")
     kwargs.setdefault("http_transport", module.request_http_inline)
+    kwargs.setdefault("model", "gpt-5.6-sol")
     return ProjectModelProvider(name, settings, artifact_dir=tmp_path / "calls", **kwargs)
 
 

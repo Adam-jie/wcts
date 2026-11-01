@@ -10,6 +10,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import shutil
 import subprocess
@@ -67,7 +68,9 @@ def files_under(root: Path) -> dict[str, str]:
 def public_sources(root: Path, *, byte_limit=180_000) -> dict[str, str]:
     result, size = {}, 0
     for name in files_under(root):
-        if Path(name).suffix.lower() not in {'.py', '.sql', '.html', '.css', '.toml', '.rst', '.md', '.txt'}:
+        if Path(name).suffix.lower() not in {'.py', '.sql', '.html', '.css', '.toml', '.rst', '.md', '.txt',
+                                            '.js', '.mjs', '.cjs', '.ts', '.jsx', '.tsx', '.vue', '.svelte',
+                                            '.c', '.h', '.cpp', '.hpp', '.cc', '.dts', '.dtsi', '.java', '.rs', '.go'}:
             continue
         text = confined(root, name, exists=True).read_text(encoding='utf-8')
         size += len(text.encode('utf-8'))
@@ -85,13 +88,16 @@ def builtin_project(settings) -> dict:
             'adapter':'flaskr', 'source':source, 'baseline':str(base/'baseline'),
             'requirements':requirements['requirements'], 'clarifications':requirements['clarifications'][:2],
             'allowed_changes':requirements['allowed_changes'], 'acceptance':str(base/'acceptance_tests'),
+            'test_environment':{'html_parser':'bs4.BeautifulSoup','beautifulsoup4':'4.14.2','parser_backend':'html.parser'},
             'python':str(settings.root/'.venv-flaskr/Scripts/python.exe') if os.name == 'nt' else str(settings.root/'.venv-flaskr/bin/python')}
 
 
 def project_catalog(settings) -> list[dict]:
     # The API accepts registered IDs only. Importing a new executable repository
     # is an explicit local CLI operation, not a model or remote HTTP action.
-    projects = [builtin_project(settings)]
+    # Local reset can remove the bundled demonstration from the workspace
+    # without deleting framework fixtures used by development tests.
+    projects = [] if (settings.root/'data/projects/.hide-builtin-demo').is_file() else [builtin_project(settings)]
     registry = settings.root/'data/projects/registered'
     if registry.is_dir():
         for path in sorted(registry.glob('*.json')):
@@ -107,6 +113,11 @@ def get_project(settings, project_id: str) -> dict:
         if item['id'] == project_id:
             return item
     raise ValueError('Unknown registered project')
+
+
+def project_profile(project):
+    return {'flaskr': 'flaskr_project', 'python_package': 'python_package',
+            'python_application': 'python_application'}[project['adapter']]
 
 
 class ProjectWorkspace:
@@ -139,6 +150,8 @@ class ProjectWorkspace:
         if not acceptance.is_relative_to(settings.root.resolve()):
             raise ValueError('Acceptance must stay within the local workspace')
         hidden_hashes = files_under(acceptance)
+        if project.get('acceptance_files') and hidden_hashes != project['acceptance_files']:
+            raise ValueError('Pinned independent contract changed before execution')
         for name in hidden_hashes:
             target = confined(self.acceptance,name)
             target.parent.mkdir(parents=True,exist_ok=True)
@@ -161,7 +174,8 @@ class ProjectWorkspace:
                 raise ValueError('Flaskr patch scope must be in the runtime package')
             if self.adapter=='python_package':
                 config=project['package_config']
-                prefix=config['source_root'].strip('/')+'/'+config['package'].replace('.','/')+'/'
+                source_root = config['source_root'].strip('/')
+                prefix = (source_root+'/' if source_root and source_root != '.' else '')+config['package'].replace('.','/')+'/'
                 if not name.startswith(prefix):
                     raise ValueError('Package patch scope must stay inside the declared runtime package')
         self.source_seal = hashes
@@ -183,15 +197,68 @@ class ProjectWorkspace:
 
     def snapshot(self):
         self.assert_integrity()
+        if self.project.get('context_mode') == 'indexed':
+            names = sorted(name for name in self.allowed if (self.candidate/name).is_file())
+            limit = min(8_000, max(1, 120_000 // max(1, len(names))))
+            sources = {name: confined(self.candidate,name,exists=True).read_bytes()[:limit].decode('utf-8', errors='ignore')
+                       .replace('\r\n','\n')
+                       for name in names}
+            manifest = {'mode':'indexed_excerpts', 'notice':'Sources are initial excerpts, not complete files. '
+                        'Use the assigned employee read_file or search tool to inspect actual source before editing.',
+                        'bytes_per_file':limit}
+        else:
+            sources = public_sources(self.candidate)
+            manifest = {'mode':'complete'}
         return {'source_revision':_mapping_sha256(self.source_seal), 'candidate_sha256':self.candidate_hash(),
-                'sources':public_sources(self.candidate), 'scope_manifest':{'allowed_changes':sorted(self.allowed),
+                'sources':sources, 'source_context':manifest, 'scope_manifest':{'allowed_changes':sorted(self.allowed),
                 'frozen':['original_tests','generated_tests','independent_acceptance','evaluation_code']}}
 
     def runtime_files(self, root):
-        return set(files_under(root)) if self.adapter=='python_package' else _runtime_files(root)
+        return set(files_under(root)) if self.adapter in {'python_package', 'python_application'} else _runtime_files(root)
 
     def candidate_hash(self):
         return _mapping_sha256({name:_sha256(self.candidate/name) for name in sorted(self.runtime_files(self.candidate))})
+
+    def fork_candidate(self):
+        """Create an isolated registered workspace at exactly this candidate.
+
+        Frozen suites are copied by the trusted host, never exposed to a model.
+        The ordinary fixed tool worker therefore keeps its run/path checks.
+        """
+        self.assert_integrity()
+        if self.generated_seal is None:
+            raise ValueError('Candidate branching requires frozen public tests')
+        branch = ProjectWorkspace(self.settings, uuid.uuid4().hex, self.project)
+        branch.write_tests({'files': [{'path': name, 'source': (self.generated/name).read_text(encoding='utf-8')}
+                                     for name in self.generated_seal]})
+        changes = [name for name in self.candidate_seal if self.candidate_seal[name] != self.source_seal.get(name)]
+        if changes:
+            branch.apply_patch({'baseline_sha256': branch.candidate_hash(), 'files': [
+                {'path': name, 'source': confined(self.candidate, name, exists=True).read_text(encoding='utf-8')}
+                for name in changes]})
+        if branch.candidate_hash() != self.candidate_hash() or branch.generated_seal != self.generated_seal:
+            raise ValueError('Candidate fork failed exact source/test binding')
+        return branch
+
+    def promote_candidate(self, selected, *, expected_sha256):
+        self.assert_integrity()
+        selected.assert_integrity()
+        if self.candidate_hash() != expected_sha256:
+            raise ValueError('Cannot promote against a stale candidate')
+        if (self.source_seal != selected.source_seal or self.generated_seal != selected.generated_seal
+                or self.hidden_seal != selected.hidden_seal or self.regression_seal != selected.regression_seal
+                or self.allowed != selected.allowed or self.adapter != selected.adapter):
+            raise ValueError('Cannot promote a candidate from a different task/test contract')
+        changes = [name for name in selected.candidate_seal
+                   if selected.candidate_seal[name] != self.candidate_seal.get(name)]
+        if not changes:
+            raise ValueError('Selected branch has no candidate changes')
+        result = self.apply_patch({'baseline_sha256': expected_sha256, 'files': [
+            {'path': name, 'source': confined(selected.candidate, name, exists=True).read_text(encoding='utf-8')}
+            for name in changes]})
+        if self.candidate_hash() != selected.candidate_hash():
+            raise ValueError('Promoted candidate differs from selected branch')
+        return result
 
     def write_tests(self, output: dict, *, dry_run=False):
         if self.generated_seal is not None:
@@ -280,18 +347,24 @@ def _kill_tree(process):
     process.wait(timeout=8)
 
 
-def run_project_tool(settings, workspace: ProjectWorkspace, operation: str, *, timeout_s: float, round_number=1) -> dict:
-    if operation not in {'baseline_public','candidate_public','verify'}:
+def run_project_tool(settings, workspace: ProjectWorkspace, operation: str, *, timeout_s: float, round_number=1, test_file=None) -> dict:
+    if operation not in {'baseline_public','candidate_public','verify','feature_tests'}:
         raise ValueError('Unknown fixed project tool')
+    if test_file is not None and (operation != 'feature_tests' or not re.fullmatch(r'test_[A-Za-z0-9_]+\.py', test_file)):
+        raise ValueError('Feature tests require a bare registered test filename')
     workspace.assert_integrity()
     directory = workspace.directory/'tool_calls'/f'{operation}-{round_number}-{uuid.uuid4().hex[:8]}'
     directory.mkdir(parents=True)
     request = {'operation':operation,'root':str(settings.root.resolve()),'run_id':workspace.directory.name,
                'baseline':str(workspace.baseline),'candidate':str(workspace.candidate),'generated':str(workspace.generated),
                'acceptance':str(workspace.acceptance),'python':workspace.project['python'],'output':str(directory/'result.json')}
+    if operation == 'feature_tests':
+        request['test_file'] = test_file
     if workspace.adapter=='python_package':
         request['adapter']='python_package'
         request['package_config']={**workspace.project['package_config'],'regression':str(workspace.regression)}
+    elif workspace.adapter == 'python_application':
+        request.update(adapter='python_application', application_config=workspace.project['application_config'])
     request_path = directory/'request.json'
     request_path.write_text(json.dumps(request),encoding='utf-8')
     worker = Path(__file__).with_name('project_tool_worker.py').resolve()

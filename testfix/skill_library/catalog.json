@@ -1,6 +1,6 @@
 {
   "schema_version": "testfix.skill-catalog.v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "skills": [
     {
       "id": "plan-workflow",
@@ -135,6 +135,36 @@
         "review_hash",
         "wheel_build",
         "real_cli"
+      ]
+    },
+    "python_application": {
+      "required_skills": [
+        "plan-workflow",
+        "explore-repository",
+        "ground-code",
+        "analyze-requirements",
+        "generate-tests",
+        "diagnose-results",
+        "repair-code",
+        "review-patch",
+        "verify-delivery"
+      ],
+      "protected_resources": [
+        "independent_acceptance",
+        "regression_tests",
+        "reference_solution"
+      ],
+      "required_gates": [
+        "paired_test_ids",
+        "source_binding",
+        "original_regression",
+        "generated_tests",
+        "independent_acceptance",
+        "protected_hashes",
+        "review_hash",
+        "archive_build",
+        "real_http",
+        "sqlite_restart"
       ]
     }
   }

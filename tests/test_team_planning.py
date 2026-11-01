@@ -100,13 +100,15 @@ def test_illegal_task_graphs_fail_before_solver(candidate, reason):
         solve(candidate)
 
 
-def test_task_count_is_bounded_and_nonempty():
+def test_task_count_is_configurable_and_nonempty(monkeypatch):
+    monkeypatch.setenv('TESTFIX_MAX_WORK_ITEMS', '12')
     candidate = plan()
     candidate["work_items"] = []
-    with pytest.raises(TeamPlanError, match="1–4"):
+    with pytest.raises(TeamPlanError, match="1–12"):
         validate(candidate)
-    with pytest.raises(TeamPlanError, match="1–4"):
-        validate(plan(*(item(f"task{i}") for i in range(5))))
+    assert len(validate(plan(*(item(f"task{i}") for i in range(12))))['work_items']) == 12
+    with pytest.raises(TeamPlanError, match="1–12"):
+        validate(plan(*(item(f"task{i}") for i in range(13))))
 
 
 def test_repair_cannot_write_even_public_but_unapproved_files():

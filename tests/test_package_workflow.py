@@ -84,7 +84,7 @@ class PackageTools:
 
     def suite(self, workspace, name, passed=True, private=False):
         log = write(workspace.directory / "synthetic-evidence" / f"{len(self.calls)}-{name}.txt", PRIVATE if private else "Synthetic unit evidence; no suite executed")
-        return {"total": 1, "passed": int(passed), "cases": [{"id": name + "::case", "status": "passed" if passed else "failure"}],
+        return {"total": 1, "passed": int(passed), "cases": [{"id": name + "::case", "status": "passed" if passed else "failure", "assertion_failure": not passed}],
                 "case_ids": [name + "::case"], "duplicate_case_ids": [], "collection_errors": 0, "successful": passed,
                 "runnable": True, "timeout": False, "exit_code": 0 if passed else 1, "parse_error": "", "binding_error": "",
                 "duration_s": 0, "stdout_path": str(log), "stderr_path": str(log)}

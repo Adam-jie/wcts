@@ -377,7 +377,7 @@ def package_catalog_path(tmp_path: Path) -> Path:
 
 def test_python_package_bundled_profile_has_nine_stages_cli_gates_and_versioned_assets():
     library = load_catalog()
-    assert library.catalog["version"] == "1.2.0"
+    assert library.catalog["version"] == "1.3.0"
     validation = library.validate_plan("python_package", PROJECT_PLAN)
     assert validation["required_order"] == PROJECT_PLAN
     assert validation["required_gates"] == PACKAGE_GATES
@@ -387,13 +387,13 @@ def test_python_package_bundled_profile_has_nine_stages_cli_gates_and_versioned_
     assert library.validate_plan("flaskr_project", PROJECT_PLAN)["required_gates"] == PROJECT_GATES
     assert library.validate_plan("pure_python", PURE_PLAN)["required_gates"] == PURE_GATES
     snapshot = library.snapshot()
-    assert snapshot["catalog_version"] == "1.2.0" and len(snapshot["files"]) == 19
+    assert snapshot["catalog_version"] == "1.3.0" and len(snapshot["files"]) == 19
     for skill_id in PROJECT_PLAN:
         contract = library.get_contract(skill_id)
-        assert contract["version"] == "1.2.0"
+        assert contract["version"] == "1.3.0"
         assert "python_package" in contract["profiles"]
         body = (library.root / skill_id / "SKILL.md").read_text(encoding="utf-8")
-        assert 'contract-version: "1.2.0"' in body
+        assert 'contract-version: "1.3.0"' in body
         assert "python_package" in body
         assert any(item["id"] == "package.profile" for item in contract["constraints"])
     library.verify_snapshot(snapshot)

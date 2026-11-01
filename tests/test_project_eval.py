@@ -206,6 +206,7 @@ def test_skip_or_collection_error_is_not_proof_of_missing_feature():
              "total": 1, "cases": [{"id": "x::test", "status": "skipped"}]}
     assert _functional_failure(suite) is False
     suite["cases"][0]["status"] = "failure"
+    suite["cases"][0]["assertion_failure"] = True
     assert _functional_failure(suite) is True
     suite["collection_errors"] = 1
     assert _functional_failure(suite) is False
@@ -232,7 +233,7 @@ def test_passing_test_stage_remains_awaiting_delivery_and_unscored(tmp_path, mon
     manifest = make_manifest(tmp_path)
     def evidence(case_id, status):
         passed = int(status == "passed")
-        return {"total": 1, "passed": passed, "cases": [{"id": case_id, "status": status}],
+        return {"total": 1, "passed": passed, "cases": [{"id": case_id, "status": status, "assertion_failure": status == "failure"}],
                 "case_ids": [case_id], "collection_errors": 0, "duplicate_case_ids": [],
                 "runnable": True, "successful": status == "passed", "timeout": False,
                 "exit_code": 0 if status == "passed" else 1, "duration_s": 0.01, "command": [],
