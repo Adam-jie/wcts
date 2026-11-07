@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1018"><title>无遁 Fix Agent · 测试集</title><link rel="stylesheet" href="/static/theme.css"><link rel="stylesheet" href="/static/workbench.css?v=20261104-2"><link rel="stylesheet" href="/static/test-library/library.css?v=20261104-2"><script type="module" src="/static/test-library/library.js"></script></head>
+<body class="workbench-page">
+  <aside class="shell-sidebar">
+    <a class="brand" href="/tasks"><span class="brand-mark"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#logo"></use></svg></span><span>无遁 <b>Fix Agent</b></span></a>
+    <nav aria-label="工作空间"><a href="/tasks"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#tasks"></use></svg>任务中心</a><a href="/test-library" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#library"></use></svg>测试集</a><a href="/intake"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#plus"></use></svg>创建任务</a><a href="/implementation"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#code"></use></svg>补全与修改</a></nav>
+    <div class="workspace-location"><i></i><span>本地工作区</span></div>
+  </aside>
+  <main>
+    <header class="topbar"><h1>测试集</h1><div><a class="primary" href="/intake"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#plus"></use></svg>描述新功能</a></div></header>
+    <div id="collections" class="collections" aria-label="数据来源"></div>
+    <p id="error" class="error" role="alert" hidden></p>
+    <div class="workspace">
+      <section class="library" aria-label="测试任务清单">
+        <div class="list-heading"><h2>工程与需求 <span id="total"></span></h2><span id="loading" role="status" aria-live="polite"></span></div>
+        <section class="filters" aria-label="筛选测试任务"><label class="search-field"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#search"></use></svg><input id="search" type="search" maxlength="200" placeholder="搜索功能、项目或编号" aria-label="搜索测试任务"></label><div class="filter-selects"><select id="domain" aria-label="工程领域"><option value="">全部领域</option><option value="web">网页系统</option><option value="software">软件工程</option><option value="mcu">MCU 固件</option><option value="mpu">MPU / 网关</option><option value="rtl">RTL 硬件设计</option></select><select id="operation" aria-label="任务类型"><option value="">全部类型</option><option value="completion">代码补全</option><option value="modification">功能修改 / 修复</option><option value="development">按需求开发</option></select></div></section>
+        <div id="entries" class="pane-scroll" role="region" aria-label="测试任务列表" tabindex="0"></div>
+        <footer class="pagination"><button id="prev" type="button">← 上一页</button><span id="page"></span><button id="next" type="button">下一页 →</button></footer>
+      </section>
+      <section class="detail" aria-label="测试任务详情">
+        <p id="empty" class="empty-state">选择一项测试任务</p>
+        <form id="detail" hidden>
+          <header class="detail-header"><div class="detail-title-group"><span id="detail-symbol" class="detail-symbol"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#code"></use></svg></span><div><h2 id="selected-title"></h2><div id="tags" class="tags"></div></div></div></header>
+          <div class="detail-scroll pane-scroll" role="region" aria-label="测试任务编辑区" tabindex="0">
+            <label class="field"><span class="field-caption"><b aria-hidden="true">01</b>任务名称</span><input id="title" required maxlength="120"></label>
+            <label class="field"><span class="field-caption"><b aria-hidden="true">02</b>要实现的功能</span><textarea id="description" required maxlength="20000" rows="3"></textarea></label>
+            <label class="field"><span class="field-caption"><b aria-hidden="true">03</b>验收与测试要求</span><textarea id="acceptance" maxlength="12000" rows="3"></textarea></label>
+            <details class="extra-details"><summary>运行环境与数据来源</summary><p id="environment"></p><div id="source" class="source"></div><p id="provenance"></p><code id="commit"></code></details>
+            <p id="execution" class="notice"></p>
+          </div>
+          <p id="message" role="status" aria-live="polite"></p>
+          <footer class="detail-footer"><a id="run" class="secondary" hidden>原始基准运行 →</a><div class="actions"><a id="download" class="secondary" hidden>下载工程包</a><button id="import" class="primary" type="submit">导入为任务 →</button></div></footer>
+        </form>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

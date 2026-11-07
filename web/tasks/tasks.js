@@ -1,4 +1,5 @@
 import {detailAssistant,detailFields,request,jsonRequest,el} from '/static/intake/details-assistant.js';
+import {icon} from '/static/workbench-icons.js';
 const $=id=>document.getElementById(id);
 const statuses={draft:'待整理',reading:'正在读取',prepared:'已整理',failed:'读取失败'};
 const modes={upload:'上传文件',url:'提供网址',idea:'描述新功能'};
@@ -12,7 +13,7 @@ const assistant=detailAssistant({mount:$('details-assistant'),getSnapshot:()=>({
 function fields(){return Object.fromEntries(detailFields.map(key=>[key,$('edit-'+key).value]));}
 function markDirty(){state.dirty=true;$('save-message').textContent='有未保存的修改';}
 function error(message){$('page-error').textContent=message;$('page-error').hidden=false;}
-function setBusy(value){state.busy=value;document.querySelectorAll('#detail-form input,#detail-form textarea,#detail-form button,#prepare,#discard').forEach(n=>n.disabled=value||state.task?.status==='reading');$('save').textContent=value?'正在处理…':'保存资料 ✓';}
+function setBusy(value){state.busy=value;document.querySelectorAll('#detail-form input,#detail-form textarea,#detail-form button,#save,#prepare,#discard').forEach(n=>n.disabled=value||state.task?.status==='reading');$('save').textContent=value?'正在处理…':'保存资料';if(!value)$('save').append(icon('arrow'));}
 function selectTab(name){document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===name;b.setAttribute('aria-selected',String(selected));$('tab-'+b.dataset.tab).hidden=!selected;});}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>selectTab(b.dataset.tab));
 for(const key of detailFields)$('edit-'+key).oninput=markDirty;
@@ -30,14 +31,15 @@ async function loadList(){
     if(!data.tasks.length){const empty=el('div',undefined,'empty-state');empty.append(el('h2',data.counts.all?'没有匹配的任务':'还没有任务'),el('p',data.counts.all?'试试其他关键词或筛选条件。':'创建任务后，材料和资料会出现在这里。'));$('task-list').append(empty);}
     for(const task of data.tasks){const button=el('button',undefined,'task-row');button.type='button';button.dataset.id=task.id;button.setAttribute('aria-current',String(state.task?.id===task.id));
       const meta=el('div',undefined,'row-meta');meta.append(el('span',statuses[task.status]||task.status,'task-status '+task.status),el('span',`${modes[task.mode]} · ${task.file_count} 个附件`));
-      button.append(el('strong',task.title),el('p',task.description),meta);button.onclick=()=>selectTask(task.id);$('task-list').append(button);}
+      const heading=el('div',undefined,'row-heading'),symbol=el('span',undefined,'task-icon '+task.mode);symbol.append(icon({upload:'code',url:'link',idea:'spark'}[task.mode]));heading.append(symbol,el('strong',task.title),icon('chevron'));
+      button.append(heading,el('p',task.description),meta);button.onclick=()=>selectTask(task.id);$('task-list').append(button);}
     $('prev').disabled=state.offset===0;$('next').disabled=state.offset+state.limit>=data.total;$('page-label').textContent=data.total?`${Math.floor(state.offset/state.limit)+1} / ${Math.ceil(data.total/state.limit)}`:'0 / 0';
   }catch(e){if(serial===state.listSerial)error('任务列表读取失败：'+e.message);}
   finally{if(serial===state.listSerial)$('loading').textContent='';}
 }
 async function selectTask(identifier,{force=false,poll=false}={}){
   if(state.busy&&!force)return;
-  if(state.dirty&&!force){error('当前资料尚未保存。请先保存，或点击“重新载入已保存资料”放弃本次修改。');return;}
+  if(state.dirty&&!force){error('当前资料尚未保存。请先保存，或点击“还原修改”放弃本次修改。');return;}
   const serial=++state.detailSerial;clearTimeout(state.timer);
   try{
     const task=await request('/api/intakes/'+encodeURIComponent(identifier));if(serial!==state.detailSerial)return;
@@ -46,15 +48,16 @@ async function selectTask(identifier,{force=false,poll=false}={}){
     $('task-number').textContent='TASK / '+task.id.slice(0,8).toUpperCase();
     $('task-meta').textContent=`${modes[task.mode]} · 创建于 ${date(task.created_at)} · 更新于 ${date(task.updated_at||task.created_at)}`;
     $('detail-status').textContent=statuses[task.status]||task.status;$('detail-status').className='task-status '+task.status;
+    $('detail-symbol').replaceChildren(icon({upload:'code',url:'link',idea:'spark'}[task.mode]));
     $('stage-message').textContent=task.error||task.analysis?.message||(task.status==='reading'?'正在读取材料，完成后可编辑任务资料。':'输入已保存，可继续补充资料和整理材料。');
     $('details-source').textContent=sources[task.details_source]||'自己填写';
     for(const key of detailFields)$('edit-'+key).value=task[key]||'';
     $('handoff').hidden=task.status!=='prepared';$('handoff').href='/api/intakes/'+task.id+'/handoff';
-    $('implement').hidden=task.status!=='prepared'||!task.analysis?.source_available;$('implement').href='/implementation?task='+task.id;
+    $('implement').hidden=task.status!=='prepared'||!task.analysis?.source_available||(task.test_library&&!task.test_library.execution_url);$('implement').href=task.test_library?.execution_url||'/implementation?task='+task.id;$('implement').textContent=task.test_library?.execution_url?'使用原始基准任务运行 →':'进入补全与修改 →';
     $('prepare').hidden=task.status!=='draft'||task.mode==='upload'&&!task.files.length;
     $('continue-upload').hidden=task.status!=='draft'||task.mode!=='upload';$('continue-upload').href='/intake?task='+task.id;
     renderMaterials(task);renderEvents(task);
-    if(!poll)selectTab('info');setBusy(false);
+    if(!poll){selectTab('info');document.querySelector('.detail-scroll').scrollTop=0;}setBusy(false);
     window.history.replaceState(null,'','/tasks?task='+task.id);
     document.querySelectorAll('.task-row').forEach(b=>b.setAttribute('aria-current',String(b.dataset.id===task.id)));
     if(task.status==='reading')state.timer=setTimeout(()=>selectTask(task.id,{poll:true}),1000);

@@ -139,3 +139,19 @@ def test_boolean_response_is_not_equal_to_number(registered):
     output = next(item for item in report['results'] if item['step_id'] == 'step_Operation02')['outputs']['step_Operation02_result']
     assert output['actual']['body']['completed'] is False
     assert any(item['id'] == 'completed' and item['status'] == 'failure' for item in output['cases'])
+
+
+@pytest.mark.parametrize('complete_object', [True, False])
+def test_contains_uses_exact_list_membership(registered, complete_object):
+    settings, project = registered
+    expected = {'title': '逐步骤演示'}
+    if complete_object:
+        expected.update(id={'$var': 'task_id'}, completed=False)
+    plan = deepcopy(PLAN)
+    plan['steps'].append(step('核对搜索列表中的完整任务', 'GET', '/api/tasks', 200,
+        query='{"q":"逐步骤演示"}', checks=[{'field': 'items', 'op': 'contains',
+                                            'value_json': json.dumps(expected, ensure_ascii=False)}]))
+    run = make_run(project, iterations=1)
+    operation_testing.execute_operation_test(run, settings,
+        SimpleNamespace(lock=threading.RLock(), runs={}), provider=Provider(plan))
+    assert run['status'] == ('completed' if complete_object else 'rejected'), run.get('error')

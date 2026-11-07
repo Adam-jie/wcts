@@ -1,0 +1,484 @@
+{
+  "captured_at": "2026-10-15T05:31:04.848002+00:00",
+  "model_run_id": "2e350d21b5f04011a90ce5fa2c056656",
+  "kind": "additional_actual_cli_demonstration",
+  "model_calls": 0,
+  "cases": [
+    {
+      "id": "csv",
+      "title": "CSV：方括号内容应逐字显示",
+      "purpose": "同一份 CSV 输入，原版会把格式标记从数据中吞掉；修复版应保留所有字符。",
+      "filename": "sample.csv",
+      "input": "name,value\n[red]urgent[/red],2\n[bold]待办[/bold],3\nlist[0],4\n",
+      "args": [
+        "sample.csv",
+        "--csv"
+      ],
+      "contains": [
+        "[red]urgent[/red]",
+        "[bold]待办[/bold]",
+        "list[0]"
+      ],
+      "absent": [],
+      "before": {
+        "exit_code": 0,
+        "stdout": "┌─────────┬───────┐\r\n│ name    │ value │\r\n├─────────┼───────┤\r\n│ urgent  │     2 │\r\n│ 待办    │     3 │\r\n│ list[0] │     4 │\r\n└─────────┴───────┘\r\n",
+        "stderr": "",
+        "duration_s": 1.409,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": false,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\csv\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "sample.csv",
+          "--csv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\csv\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\csv\\before\\output.html"
+        ],
+        "command_display": "rich sample.csv --csv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/csv/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/csv/before/stderr.txt",
+        "svg_url": "assets/0e086080d45a/csv/before/output.svg",
+        "html_url": "assets/0e086080d45a/csv/before/output.html"
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "┌───────────────────┬───────┐\r\n│ name              │ value │\r\n├───────────────────┼───────┤\r\n│ [red]urgent[/red] │     2 │\r\n│ [bold]待办[/bold] │     3 │\r\n│ list[0]           │     4 │\r\n└───────────────────┴───────┘\r\n",
+        "stderr": "",
+        "duration_s": 0.914,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "sample.csv",
+          "--csv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\csv\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\csv\\after\\output.html"
+        ],
+        "command_display": "rich sample.csv --csv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/csv/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/csv/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/csv/after/output.svg",
+        "html_url": "assets/0e086080d45a/csv/after/output.html"
+      }
+    },
+    {
+      "id": "closing",
+      "title": "CSV：遇到 [/bold] 也不能崩溃",
+      "purpose": "[/bold] 是输入数据。修复版应退出码为 0，并显示原文。",
+      "filename": "unmatched.csv",
+      "input": "name,value\n[/bold],2\n",
+      "args": [
+        "unmatched.csv",
+        "--csv"
+      ],
+      "contains": [
+        "[/bold]"
+      ],
+      "absent": [],
+      "before": {
+        "exit_code": 4294967295,
+        "stdout": "",
+        "stderr": "failed to print resource: closing tag '[/bold]' at position 0 doesn't match any open tag\r\n",
+        "duration_s": 1.18,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": false,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\closing\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "unmatched.csv",
+          "--csv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\closing\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\closing\\before\\output.html"
+        ],
+        "command_display": "rich unmatched.csv --csv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/closing/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/closing/before/stderr.txt",
+        "svg_url": null,
+        "html_url": null
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "┌─────────┬───────┐\r\n│ name    │ value │\r\n├─────────┼───────┤\r\n│ [/bold] │     2 │\r\n└─────────┴───────┘\r\n",
+        "stderr": "",
+        "duration_s": 0.912,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "unmatched.csv",
+          "--csv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\closing\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\closing\\after\\output.html"
+        ],
+        "command_display": "rich unmatched.csv --csv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/closing/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/closing/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/closing/after/output.svg",
+        "html_url": "assets/0e086080d45a/closing/after/output.html"
+      }
+    },
+    {
+      "id": "tsv",
+      "title": "TSV：自动识别文件与字面值",
+      "purpose": "不传 --csv，靠 .tsv 扩展名自动识别；表头和单元格中的标记均是数据。",
+      "filename": "sample.tsv",
+      "input": "[bold]name[/bold]\tvalue\n[blue]中文[/blue]\t2\n",
+      "args": [
+        "sample.tsv"
+      ],
+      "contains": [
+        "[bold]name[/bold]",
+        "[blue]中文[/blue]"
+      ],
+      "absent": [],
+      "before": {
+        "exit_code": 0,
+        "stdout": "┌──────┬───────┐\r\n│ name │ value │\r\n├──────┼───────┤\r\n│ 中文 │     2 │\r\n└──────┴───────┘\r\n",
+        "stderr": "",
+        "duration_s": 1.411,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": false,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\tsv\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "sample.tsv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\before\\output.html"
+        ],
+        "command_display": "rich sample.tsv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/tsv/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/tsv/before/stderr.txt",
+        "svg_url": "assets/0e086080d45a/tsv/before/output.svg",
+        "html_url": "assets/0e086080d45a/tsv/before/output.html"
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "┌───────────────────┬───────┐\r\n│ [bold]name[/bold] │ value │\r\n├───────────────────┼───────┤\r\n│ [blue]中文[/blue] │     2 │\r\n└───────────────────┴───────┘\r\n",
+        "stderr": "",
+        "duration_s": 0.893,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "sample.tsv",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\after\\output.html"
+        ],
+        "command_display": "rich sample.tsv --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/tsv/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/tsv/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/tsv/after/output.svg",
+        "html_url": "assets/0e086080d45a/tsv/after/output.html"
+      }
+    },
+    {
+      "id": "print",
+      "title": "原有功能：--print 仍渲染有意的格式",
+      "purpose": "用户显式用 --print 表示要渲染格式。保留这个行为，显示绿色加粗文字。",
+      "filename": null,
+      "input": "[bold green]TestFix OK[/bold green]",
+      "args": [
+        "--print",
+        "[bold green]TestFix OK[/bold green]"
+      ],
+      "contains": [
+        "TestFix OK"
+      ],
+      "absent": [
+        "[bold green]",
+        "[/bold green]"
+      ],
+      "before": {
+        "exit_code": 0,
+        "stdout": "TestFix OK\r\n",
+        "stderr": "",
+        "duration_s": 1.201,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\print\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "--print",
+          "[bold green]TestFix OK[/bold green]",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\print\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\print\\before\\output.html"
+        ],
+        "command_display": "rich --print [bold green]TestFix OK[/bold green] --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/print/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/print/before/stderr.txt",
+        "svg_url": "assets/0e086080d45a/print/before/output.svg",
+        "html_url": "assets/0e086080d45a/print/before/output.html"
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "TestFix OK\r\n",
+        "stderr": "",
+        "duration_s": 0.914,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "--print",
+          "[bold green]TestFix OK[/bold green]",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\print\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\print\\after\\output.html"
+        ],
+        "command_display": "rich --print [bold green]TestFix OK[/bold green] --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/print/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/print/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/print/after/output.svg",
+        "html_url": "assets/0e086080d45a/print/after/output.html"
+      }
+    },
+    {
+      "id": "json",
+      "title": "原有功能：JSON 格式化",
+      "purpose": "从标准输入读取 JSON，格式化显示键、字符串、数字和布尔值。",
+      "filename": null,
+      "input": "{\"project\":\"TestFix\",\"checks\":21,\"passed\":true}",
+      "stdin": true,
+      "args": [
+        "--json",
+        "-"
+      ],
+      "contains": [
+        "project",
+        "TestFix",
+        "21",
+        "true"
+      ],
+      "absent": [],
+      "before": {
+        "exit_code": 0,
+        "stdout": "{\r\n  \"project\": \"TestFix\",\r\n  \"checks\": 21,\r\n  \"passed\": true\r\n}\r\n",
+        "stderr": "",
+        "duration_s": 1.181,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\json\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "--json",
+          "-",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\before\\output.html"
+        ],
+        "command_display": "rich --json - --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/json/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/json/before/stderr.txt",
+        "svg_url": "assets/0e086080d45a/json/before/output.svg",
+        "html_url": "assets/0e086080d45a/json/before/output.html"
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "{\r\n  \"project\": \"TestFix\",\r\n  \"checks\": 21,\r\n  \"passed\": true\r\n}\r\n",
+        "stderr": "",
+        "duration_s": 0.855,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "--json",
+          "-",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\after\\output.html"
+        ],
+        "command_display": "rich --json - --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/json/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/json/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/json/after/output.svg",
+        "html_url": "assets/0e086080d45a/json/after/output.html"
+      }
+    },
+    {
+      "id": "markdown",
+      "title": "原有功能：Markdown 标题与列表",
+      "purpose": "读取 Markdown 文件，渲染标题、加粗与列表。可打开真实 SVG/HTML 导出。",
+      "filename": "report.md",
+      "input": "# TestFix report\n\n**Result: passed**\n\n- CSV literal data preserved\n- CLI runs from installed package\n",
+      "args": [
+        "report.md"
+      ],
+      "contains": [
+        "TestFix report",
+        "Result: passed",
+        "CSV literal data preserved"
+      ],
+      "absent": [
+        "**Result: passed**"
+      ],
+      "before": {
+        "exit_code": 0,
+        "stdout": "╔══════════════════════════════════════════════════════════════════════════════╗\r\n║                                TestFix report                                ║\r\n╚══════════════════════════════════════════════════════════════════════════════╝\r\n\r\nResult: passed                                                                  \r\n\r\n • CSV literal data preserved                                                   \r\n • CLI runs from installed package                                              \r\n",
+        "stderr": "",
+        "duration_s": 1.408,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+          "-I",
+          "-B",
+          "-X",
+          "utf8",
+          "-c",
+          "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\markdown\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+          "report.md",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\before\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\before\\output.html"
+        ],
+        "command_display": "rich report.md --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/markdown/before/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/markdown/before/stderr.txt",
+        "svg_url": "assets/0e086080d45a/markdown/before/output.svg",
+        "html_url": "assets/0e086080d45a/markdown/before/output.html"
+      },
+      "after": {
+        "exit_code": 0,
+        "stdout": "╔══════════════════════════════════════════════════════════════════════════════╗\r\n║                                TestFix report                                ║\r\n╚══════════════════════════════════════════════════════════════════════════════╝\r\n\r\nResult: passed                                                                  \r\n\r\n • CSV literal data preserved                                                   \r\n • CLI runs from installed package                                              \r\n",
+        "stderr": "",
+        "duration_s": 1.137,
+        "timeout": false,
+        "output_limit_exceeded": false,
+        "passed": true,
+        "actual_command": [
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+          "report.md",
+          "--width",
+          "80",
+          "--export-svg",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\after\\output.svg",
+          "--export-html",
+          "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\after\\output.html"
+        ],
+        "command_display": "rich report.md --width 80 --export-svg output.svg --export-html output.html",
+        "stdout_url": "assets/0e086080d45a/markdown/after/stdout.txt",
+        "stderr_url": "assets/0e086080d45a/markdown/after/stderr.txt",
+        "svg_url": "assets/0e086080d45a/markdown/after/output.svg",
+        "html_url": "assets/0e086080d45a/markdown/after/output.html"
+      }
+    }
+  ],
+  "candidate_source_matches_accepted": true,
+  "note": "New real subprocess demonstrations of the accepted package; separate from original 15/21/16 test counts. Controls browse recorded outputs, not new model calls.",
+  "source": {
+    "repository": "https://github.com/Textualize/rich-cli",
+    "commit": "46f4d2469097be395558768714a5f07ebccf1412"
+  },
+  "experiment": {
+    "duration_s": 351.733,
+    "model_calls": 8,
+    "model_requested": "gpt-5.6-sol",
+    "actual_model": null,
+    "scores": {
+      "generated_baseline": {
+        "passed": 3,
+        "total": 15
+      },
+      "generated": {
+        "passed": 15,
+        "total": 15
+      },
+      "baseline": {
+        "passed": 3,
+        "total": 21
+      },
+      "acceptance": {
+        "passed": 21,
+        "total": 21
+      },
+      "upstream_regression": {
+        "passed": 1,
+        "total": 1
+      },
+      "behavior_regression": {
+        "passed": 13,
+        "total": 13
+      },
+      "extended": {
+        "passed": 16,
+        "total": 16
+      }
+    }
+  }
+}

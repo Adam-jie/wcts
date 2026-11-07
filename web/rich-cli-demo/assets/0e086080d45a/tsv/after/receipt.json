@@ -1,0 +1,24 @@
+{
+  "exit_code": 0,
+  "stdout": "┌───────────────────┬───────┐\r\n│ [bold]name[/bold] │ value │\r\n├───────────────────┼───────┤\r\n│ [blue]中文[/blue] │     2 │\r\n└───────────────────┴───────┘\r\n",
+  "stderr": "",
+  "duration_s": 0.893,
+  "timeout": false,
+  "output_limit_exceeded": false,
+  "passed": true,
+  "actual_command": [
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+    "sample.tsv",
+    "--width",
+    "80",
+    "--export-svg",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\after\\output.svg",
+    "--export-html",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\tsv\\after\\output.html"
+  ],
+  "command_display": "rich sample.tsv --width 80 --export-svg output.svg --export-html output.html",
+  "stdout_url": "assets/0e086080d45a/tsv/after/stdout.txt",
+  "stderr_url": "assets/0e086080d45a/tsv/after/stderr.txt",
+  "svg_url": "assets/0e086080d45a/tsv/after/output.svg",
+  "html_url": "assets/0e086080d45a/tsv/after/output.html"
+}

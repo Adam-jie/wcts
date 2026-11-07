@@ -4,11 +4,11 @@
 
 ## 依赖接入
 
-源码位于同级 `../自动化框架/wctp` 时自动发现。其他位置配置 `TESTFIX_WCTP_ROOT`，其值为包含 `src/engine/graph_executor.py` 的 WCTP 根目录。需要原源码；当前 TestFix 源码包不复制原 WCTP。PyYAML 已纳入主工程依赖与 `uv.lock`。
+v0.2.1 默认加载源码包中的 `testfix/_vendor/wctp`。团队已确认有权公开这七个核心文件，原始文件哈希记录于其中的 `SOURCE.json`。需要使用其他位置的同版本源码时，配置 `TESTFIX_WCTP_ROOT`，其值为包含 `src/engine/graph_executor.py` 的 WCTP 根目录。PyYAML 已纳入主工程依赖与 `uv.lock`。
 
 加载范围固定为原 `graph_executor.py`、`context.py`、`case_parser.py`、`step_registry.py`、`config.py`、`exceptions.py`、`logkit.py`，逐文件核对源码 SHA-256。加载器使用私有命名空间，绝对 `src` 导入在内存中重定位；仅用于延迟类型注解的 `EnvBlueprint` 导入被省略，以避免设备驱动依赖。原图执行、分支取消、汇聚和循环逻辑没有复制或改写。适配子类按线程上限拆分就绪批次；每个已启动子批次全部完成后才处理结果，发现异常时不再启动后续排队子批次。
 
-原源码缺失或发生变化会明确失败；不会自动改用另一个执行器。本机路径不是云端部署配置。构建华为云环境时需提供同一版本的 WCTP 依赖并设置该变量。
+源码缺失或哈希发生变化时会明确失败。云端部署可以直接使用发布包内的核心文件。
 
 ## 实际调度
 

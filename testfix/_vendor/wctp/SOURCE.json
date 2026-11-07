@@ -1,0 +1,13 @@
+{
+  "source": "User-provided WCTP source",
+  "redistribution_authorized_by_owner": "2026-11-07",
+  "files": {
+    "src/engine/graph_executor.py": "37159cfee123b110ed0f4a194bb640cdc7d5de1a8b5df5de5b54bf69df37130c",
+    "src/engine/context.py": "a2d95ec9171e1a39893eaf67d37a18c898390f9e1fd68ac80694dbef68f5c455",
+    "src/tcm/case_parser.py": "469ddec328daf157d030c46c5f494653fa10372a782be6bfc92fb4eeeec0c87c",
+    "src/tcm/step_registry.py": "a85df5c2dc28259a818afb96fe60af17346256227afe58c11bc1e56958f254d3",
+    "src/infra/config.py": "fcfc2662d5a485ce5417ef5dd03238c1d9c1d128ed49680c5f697826244dd947",
+    "src/infra/exceptions.py": "75694c9339a819cdcbc6e7fd9b3eb01882abc91794d619cb562ccde304ef34fa",
+    "src/infra/logkit.py": "9fe0dd1f49df84e24931f9dced4291ff064eb5575c979bf9d87cb0eadbe961d7"
+  }
+}

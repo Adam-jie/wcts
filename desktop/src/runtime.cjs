@@ -4,7 +4,7 @@ const crypto=require('node:crypto');
 const http=require('node:http');
 const {spawn}=require('node:child_process');
 
-const pages=Object.freeze({model:'/explorer',engineering:'/engineering',hardware:'/hardware',web:'/web-testing',home:'/'});
+const pages=Object.freeze({model:'/explorer',engineering:'/implementation',hardware:'/hardware',web:'/web-testing',home:'/'});
 
 function validateWorkspace(directory) {
   if(typeof directory!=='string' || !path.isAbsolute(directory)) throw new Error('请选择工程的完整文件夹路径。');

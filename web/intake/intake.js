@@ -50,6 +50,8 @@ function renderTask(task){
   $('result-message').textContent=task.error||task.analysis?.message||(task.status==='reading'?'正在读取文件与工程结构…':'材料与需求已保存。');
   $('download-handoff').hidden=task.status!=='prepared';$('download-handoff').href='/api/intakes/'+task.id+'/handoff';
   $('view-in-center').href='/tasks?task='+task.id;
+  $('implement-task').hidden=task.status!=='prepared'||!task.analysis?.source_available;
+  $('implement-task').href='/implementation?task='+encodeURIComponent(task.id);
   $('result-files').replaceChildren();
   for(const file of task.files){
     const card=node('div',undefined,'file-evidence'),info=file.inspection;

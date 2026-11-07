@@ -1,0 +1,17 @@
+{
+  "source_run_id": "bdb033a20dd94e67a1cdbd4e261b8948",
+  "purpose": "Accepted local TaskBoard fixture used to construct the controlled missing-function case",
+  "files": {
+    "pyproject.toml": "14b8d58f3a3ef5010345a2f91ffd86a56c52197a3c96415febbd96bb13ae2f90",
+    "README.md": "bab61ec97064c702f7c7c81645a58b1ee09a39d34df49f791dd28a86085d5408",
+    "server.py": "947fa10cf9c0f7125a64e23f9705ab3a0c8cb5906dc10994c476da35ec675453",
+    "填写说明.txt": "11487efabf299e623f83aac9fb4836d9c753cc6316ace829fbbc85ad2877db6c",
+    "taskboard/application.py": "f63735d58f86b320600720559d0446d60ef6664d6e0d4830a0f9814e4d7e1ddf",
+    "taskboard/storage.py": "ae994460015a7f1cb372169a9c083a6d310886acdef8e228cde7b4f2445be64e",
+    "taskboard/__init__.py": "9fbcb1db9b34625e72077d4503338949f566a71930dbc9b59e15bb296c8bbf5c",
+    "tests/test_core.py": "9af8f95a37930ef8900864766ef569fab5f0c451582bb57fda15a6063c56a0fa",
+    "web/app.js": "15bbec20853a9d07870e0b5c37df4eefd1e3953bc6f9f2d4f1acf9cef027b970",
+    "web/index.html": "6f357ffd8870259752deb6e0537219639fbefbcc199e779d45d2c0ca54d6d187",
+    "web/style.css": "385fcf29fc6d5d02b8dafff1cef6ebca9a68e4e580586bf9cf19c10070d7d3af"
+  }
+}

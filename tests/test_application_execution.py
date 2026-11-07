@@ -2,6 +2,8 @@ import io
 import json
 from pathlib import Path
 import shutil
+import sys
+from urllib.request import urlopen
 import uuid
 import zipfile
 
@@ -57,6 +59,30 @@ def test_python_application_profile_preserves_http_and_archive_gates():
         'analyze-requirements', 'generate-tests', 'diagnose-results', 'repair-code', 'review-patch', 'verify-delivery'])
     assert {'archive_build', 'real_http', 'sqlite_restart'} <= set(result['required_gates'])
     assert 'wheel_build' not in result['required_gates']
+
+
+def test_application_starts_after_a_transient_readiness_read_error(tmp_path, monkeypatch):
+    from testfix.application_tools import start_taskboard
+    from testfix.package_tools import _stop_tree
+
+    original_read = Path.read_text
+    denied = []
+
+    def read_text(path, *args, **kwargs):
+        if path.name == 'ready.json' and not denied:
+            denied.append(path)
+            raise PermissionError('Observed Windows readiness sharing failure')
+        return original_read(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'read_text', read_text)
+    process, origin, _ = start_taskboard(sys.executable, ROOT / 'examples/taskboard-upload-demo',
+                                        tmp_path / 'tasks.sqlite3', tmp_path / 'server')
+    try:
+        assert denied == [tmp_path / 'server/ready.json']
+        with urlopen(origin + '/api/health') as response:
+            assert json.load(response) == {'status': 'ok', 'product': 'TaskBoard'}
+    finally:
+        _stop_tree(process)
 
 
 def test_full_application_tool_baseline_and_fixed_fixture(tmp_path_factory):

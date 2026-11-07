@@ -85,6 +85,14 @@ test('three main modules own stages, employees and tools at different levels',()
   assert.ok(MODULES.every(m=>view.nodes.some(n=>n.id===m.id)));
   assert.ok(!view.nodes.some(n=>n.taskId==='repair'));
 });
+test('generation scene prioritizes employee figures when assignments exist',()=>{
+  const frame=frameOf(fixture(),3),view=visibleFrame(frame,'module-generation');
+  assert.equal(view.nodes.filter(n=>n.kind==='employee').length,3);
+  assert.ok(!view.nodes.some(n=>n.parent==='module-generation'&&n.kind==='phase'));
+  assert.ok(!view.nodes.some(n=>n.kind==='module'));
+  assert.ok(view.nodes.some(n=>n.kind==='controller'));
+  assert.ok(frame.nodes.some(n=>n.id==='ground-code'&&n.kind==='phase'));
+});
 test('a chronological phase change never manufactures a communication edge',()=>{
   const run=fixture();run.events=[{agent:'ground-code',stage:'running',message:'定位',time:new Date().toISOString()}];
   const frame=frameOf(run,1);assert.equal(frame.current.inferred,true);
@@ -94,5 +102,7 @@ test('a future worker choice is not shown as an already dispatched assignment',(
   const run=fixture();run.collaboration.rounds[0].employees=[{task_id:'a',worker_id:'database#1',worker_role:'database',execution_strategy:'standard',assignment_id:'allocation-1',specialist_ids:['database']}];
   assert.equal(frameOf(run,1).nodes.find(n=>n.taskId==='a').workerId,'');
   const later=frameOf(run,2);assert.equal(later.nodes.find(n=>n.taskId==='a').workerId,'database#1');
+  assert.equal(frameOf(run,1).nodes.find(n=>n.taskId==='a').workerRole,'');
+  assert.equal(later.nodes.find(n=>n.taskId==='a').workerRole,'database');
   assert.match(publicDetail(later.nodes.find(n=>n.taskId==='a')).assignment,/allocation-1/);
 });

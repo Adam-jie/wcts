@@ -28,7 +28,7 @@ from .reports import now
 MAX_BYTES = 1024 * 1024 * 1024
 MAX_MEMBERS = 30000
 MAX_EXPANDED = 4 * 1024 * 1024 * 1024
-SOURCE_SUFFIXES = {'.py', '.js', '.ts', '.tsx', '.jsx', '.html', '.css', '.vue', '.java', '.go', '.rs', '.c', '.cpp', '.h', '.sql', '.cs'}
+SOURCE_SUFFIXES = {'.py', '.js', '.ts', '.tsx', '.jsx', '.html', '.css', '.vue', '.java', '.go', '.rs', '.c', '.cpp', '.h', '.sql', '.cs', '.v', '.sv', '.ino'}
 INSTALLERS = {'.exe', '.msi', '.msix', '.apk', '.aab', '.deb', '.rpm', '.dmg', '.pkg', '.appimage'}
 
 
@@ -327,6 +327,8 @@ def create_intake_router(settings):
                     summary = {key: item[key] for key in ('id', 'title', 'mode', 'status', 'created_at')}
                     summary.update(updated_at=item.get('updated_at', item['created_at']), file_count=len(item['files']),
                                    details_source=item.get('details_source', 'manual'), description=item['description'][:160])
+                    if item.get('test_library'):
+                        summary['execution_ready'] = False
                     counts['all'] += 1
                     if item['status'] in counts: counts[item['status']] += 1
                     if status and item['status'] != status or mode and item['mode'] != mode: continue

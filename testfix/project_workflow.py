@@ -351,6 +351,10 @@ def execute_project_run(run: dict, settings, persist=None, *, provider=None, too
             if not employee_scope and not gate_scope and normal_attempts>=option['max_invocations']:
                 raise BudgetExceeded('Selected integer plan exhausted this capability invocation allowance')
             snapshot = active_workspace.snapshot()
+            schema = output_schema or model_schema(skill)
+            if output_schema is None and profile == 'python_application' and skill == 'repair-code':
+                schema = obj({**schema['properties'],
+                              'baseline_sha256': {**STRING, 'enum': [snapshot['candidate_sha256']]}})
             context = {'public_requirements':project['requirements'],'clarifications':project['clarifications'],
                        **snapshot,'run_plan':plan['selected'],'strategy':option['strategy'], 'requirement_ids':requirement_ids,
                        'control_instructions':(APPLICATION_INSTRUCTIONS if profile=='python_application' else PACKAGE_INSTRUCTIONS if profile=='python_package' else CONTROL_INSTRUCTIONS).get(skill,''),
@@ -408,7 +412,7 @@ def execute_project_run(run: dict, settings, persist=None, *, provider=None, too
         try:
             if hasattr(provider,'invoke_traced'):
                 try:
-                    output,trace = provider.invoke_traced(skill,context,output_schema or model_schema(skill),
+                    output,trace = provider.invoke_traced(skill,context,schema,
                                                          timeout_s=timeout,token_cap=cap)
                 finally:
                     trace = trace or provider.last_trace
@@ -418,7 +422,7 @@ def execute_project_run(run: dict, settings, persist=None, *, provider=None, too
                 with legacy_provider_lock:
                     prior_calls = len(provider.calls)
                     try:
-                        output = provider.invoke(skill,context,output_schema or model_schema(skill),
+                        output = provider.invoke(skill,context,schema,
                                                  timeout_s=timeout,token_cap=cap)
                     finally:
                         if len(provider.calls)==prior_calls+1:
@@ -1024,8 +1028,29 @@ def package_reproduction(project):
 
 
 APPLICATION_INSTRUCTIONS = {**CONTROL_INSTRUCTIONS,
-    'generate-tests': 'This is the registered TaskBoard Python WSGI application, NOT Flask or rich-cli. Use taskboard.storage.Storage with tmp_path or taskboard.application.create_application with a self-contained in-process WSGI helper (io.BytesIO, JSON and environ); do not import tests.test_core, open network sockets or run commands. Return BARE test_*.py/conftest.py filenames, complete steps and coverage for all four requirement IDs. Cover exact literal Chinese/English substring search, total after filtering, empty query/no-match, disjoint pages and out-of-range empty pages, True/False completion persistence after Storage reopen, plus existing create/delete/validation behavior. Storage initializes ten seed tasks, including titles that can match a query: account for them or use test queries that cannot match any seed; page counts must include them. Empty query removes the filter but retains pagination: total counts all matching records, while items contains only the requested page, default page_size=5. If checking all returned items, explicitly use a large enough valid page_size or collect multiple pages. For the WSGI helper, decode JSON only when the response Content-Type is application/json; HTML, CSS and JavaScript responses are text and must not be passed to json.loads. Assertions must compare observed behavior with independent expected values, never compare an expression with itself or use unconditional assertions. Use small independent fixtures; generated tests are frozen before repair. Do not impose unrequested case folding, Unicode normalization, huge page semantics or UI redesign.',
-    'repair-code': 'Repair the TaskBoard WSGI application. Return full contents only of changed allowed paths bound to current candidate_sha256. Preserve original tests, schema, metadata, static assets and public API. Implement literal substring filtering with matching total, correct (page-1)*page_size offset, and real SQLite persistence of completion including False. Preserve create/get/delete and errors. SQL wildcard characters in search are literal data. The host runs frozen tests and actual HTTP/restart checks; do not fabricate results.',
+    'generate-tests': (
+        'Use the supplied TaskBoard requirements and cover exactly their IDs. Return only executable Python '
+        'test_*.py files or conftest.py in files, with bare filenames. Put the test plan in steps and coverage. '
+        'Do not include a separate plan, JSON, or notes file. Use tmp_path and either Storage or a self-contained '
+        'in-process WSGI helper. Create app = create_application(tmp_path / "tasks.sqlite3") and pass app to '
+        'that helper. The helper calls app(environ, start_response) directly; create_application only accepts '
+        'a database path. Do not import original test modules, open sockets, or run commands. '
+        'When the baseline has only a bootstrap endpoint, assert the expected '
+        'HTTP status before inspecting business fields so absent behavior produces a meaningful assertion failure. '
+        'Decode JSON only for application/json. For search and pagination, account for the ten seed records, '
+        'match percent and underscore literally, and distinguish the filtered total from the current page. '
+        'For completion, check both boolean values after reopening Storage. Use small independent fixtures '
+        'and compare actual behavior with the expected contract. The host freezes generated tests before repair.'
+    ),
+    'repair-code': (
+        'Implement the supplied TaskBoard WSGI requirements in the allowed paths. Return full contents of changed '
+        'files, with one entry per changed path. Copy the current candidate_sha256 verbatim into baseline_sha256. '
+        'Preserve original tests and existing behavior outside the requested '
+        'changes. For a bootstrap baseline, implement the requested business code and static assets in the declared '
+        'paths. Keep the published factory and HTTP contract even if a generated test misuses it. Keep SQL '
+        'parameters bound and treat search wildcards literally. The host runs frozen tests and '
+        'actual HTTP and restart checks.'
+    ),
     'review-patch': 'Independently review TaskBoard against all supplied requirements and public results. Bind the exact candidate hash. Check SQL parameterization, literal %/_ handling, correct filtered totals and pagination, committed True/False state, reopening databases and unchanged original behavior. No Flask or rich-cli assumptions apply. State that verification remains host-executed.',
     'diagnose-results': 'Diagnose TaskBoard using public requirement matrix and actual assertion failures. Use only allowed runtime paths as repair targets; distinguish broken behavior from collection/environment errors. Do not modify tests or import routing.'}
 

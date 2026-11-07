@@ -21,11 +21,7 @@ function buildPartList() {
   for (const group of groups) {
     const section = element('section','part-group');
     section.dataset.group = group.id;
-    const heading = element('h2','group-title','主模块 '+String(groups.indexOf(group)+1).padStart(2,'0'));
-    heading.append(element('span','',childParts(group.id).length+' 项能力'));
-    section.append(heading);
     const children=element('div','part-subtree');children.id='children-'+group.id;
-    children.append(element('h2','group-title',group.name+' · 内部能力'));
     for (const part of parts.filter(p => p.group === group.id)) {
       const button = element('button','part-item'+(part.parent?' child-part':' primary-part'));
       button.type = 'button';
@@ -36,8 +32,8 @@ function buildPartList() {
       if(childParts(part.id).length)button.setAttribute('aria-expanded',String(state.expandedRoot===part.group));
       const icon = element('span','part-icon'); icon.innerHTML = iconMarkup(part.icon);
       const copy = element('span','part-item-copy');
-      copy.append(element('strong','',part.name),element('small','',part.short));
-      button.append(icon,copy,element('span','part-number',String(part.sequence).padStart(2,'0')+(childParts(part.id).length?' ›':'')));
+      copy.append(element('strong','',part.name));
+      button.append(icon,copy);
       button.addEventListener('click',() => selectPart(part.id));
       listButtons.set(part.id,button);
       (part.parent?children:section).append(button);
@@ -135,7 +131,7 @@ function updateInspector() {
     target.append(element('h3','detail-label',nested.length?'完整结构 · 已全部展开':'功能与输出'));
     const children=element('div','model-children full-outline');
     if(nested.length){
-      nested.forEach(item=>{const child=element('button');child.type='button';child.dataset.selectPart=item.id;child.style.setProperty('--outline-depth',String(item.depth-part.depth-1));child.append(element('i','step-index',String(item.sequence).padStart(2,'0')),element('strong','',item.name.replace(/^\d{2} /,'')),element('small','',item.short));child.addEventListener('click',()=>selectPart(item.id));children.append(child);});
+      nested.forEach(item=>{const child=element('button');child.type='button';child.dataset.selectPart=item.id;child.style.setProperty('--outline-depth',String(item.depth-part.depth-1));child.append(element('i','step-index',String(item.sequence).padStart(2,'0')),element('strong','',item.name.replace(/^\d{2} /,'')));child.addEventListener('click',()=>selectPart(item.id));children.append(child);});
     }else modules[part.id].children.forEach(name=>{const child=element('span');child.append(element('i'),document.createTextNode(name));children.append(child);});
     target.append(children,element('h3','detail-label','模块职责'));
     const list = element('ul','responsibilities');
@@ -196,7 +192,6 @@ function setExplosion(value) {
 
 const directCount=parts.filter(part=>part.depth===1).length,detailCount=parts.filter(part=>part.depth>1).length;
 $('capability-summary').textContent='3 个主模块 · '+directCount+' 项直属能力 · '+detailCount+' 项细分';
-$('footer-capabilities').textContent='整棵分支一次展开 · Agent 职责 · MCTS 候选空间树';
 buildPartList(); updateInspector(); setExplosion(state.explosion);
 for (const button of document.querySelectorAll('[data-view]')) button.addEventListener('click',()=>setModelView(button.dataset.view));
 $('part-search').addEventListener('input',event => {
@@ -370,8 +365,8 @@ function createEngine(T) {
     return{...edge,object:o,arrow};
   });
   const labels=parts.map(part=>{
-    const button=element('button','scene-label');button.type='button';button.dataset.part=part.id;button.dataset.depth=String(part.depth);button.title=part.name+' · '+part.short;button.style.setProperty('--part-color',part.color);button.setAttribute('aria-pressed',String(part.id===state.selected));
-    button.append(element('strong','',part.name),element('small','',part.short));button.addEventListener('click',()=>selectPart(part.id));$('label-buttons').append(button);
+    const button=element('button','scene-label');button.type='button';button.dataset.part=part.id;button.dataset.depth=String(part.depth);button.title=part.name;button.style.setProperty('--part-color',part.color);button.setAttribute('aria-pressed',String(part.id===state.selected));
+    button.append(element('strong','',part.name));button.addEventListener('click',()=>selectPart(part.id));$('label-buttons').append(button);
     const path=document.createElementNS('http://www.w3.org/2000/svg','polyline');path.setAttribute('fill','none');path.classList.add('label-line');$('label-lines').append(path);
     const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('r','2');dot.classList.add('label-point');$('label-lines').append(dot);
     return{part,button,path,dot};

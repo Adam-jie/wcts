@@ -1,0 +1,1 @@
+failed to print resource: closing tag '[/bold]' at position 0 doesn't match any open tag

@@ -16,12 +16,21 @@ export function detailAssistant({mount,getSnapshot,onApply,onBusy=()=>{}}){
   for(const button of [manual,ai]){button.type='button';button.setAttribute('aria-pressed','false');choices.append(button);}
   header.append(label,choices);
   const panel=el('div',undefined,'assistant-panel');panel.hidden=true;
-  const promptLabel=el('label','告诉 AI 想补充什么（一句话即可）', 'field'),prompt=el('textarea');prompt.rows=2;prompt.maxLength=6000;prompt.placeholder='例如：根据我的描述整理功能需求，补充多数据、循环测试和回归验收标准';promptLabel.append(prompt);
+  const suggestion='根据我的描述整理功能需求，补充多数据、循环测试和回归验收标准';
+  const promptLabel=el('label','告诉 AI 想补充什么（一句话即可）', 'field'),prompt=el('textarea');prompt.rows=2;prompt.maxLength=6000;prompt.placeholder=suggestion;prompt.setAttribute('aria-description','空白或已输入建议开头时，按 Tab 补全建议；Shift+Tab 返回上一项。');promptLabel.append(prompt);
+  const complete=el('button','填入建议 · Tab','assistant-complete');complete.type='button';
+  function completePrompt(){prompt.value=suggestion;prompt.focus();prompt.setSelectionRange(suggestion.length,suggestion.length);prompt.dispatchEvent(new Event('input',{bubbles:true}));}
+  complete.onclick=completePrompt;
+  prompt.addEventListener('keydown',event=>{
+    if(event.key==='Tab'&&!event.shiftKey&&!event.ctrlKey&&!event.altKey&&!event.metaKey&&!event.isComposing&&prompt.value!==suggestion&&suggestion.startsWith(prompt.value)){
+      event.preventDefault();completePrompt();
+    }
+  });
   const tools=el('div',undefined,'assistant-tools'),provider=el('select');provider.setAttribute('aria-label','AI 模型服务');
   const generate=el('button','生成详细资料','secondary');generate.type='button';
   const message=el('p','模型根据当前描述和材料生成草稿，采用前可检查。','field-help');message.setAttribute('role','status');message.setAttribute('aria-live','polite');
   const preview=el('section',undefined,'assistant-preview');preview.hidden=true;
-  tools.append(provider,generate);panel.append(promptLabel,tools,message,preview);mount.append(header,panel);
+  tools.append(provider,generate);panel.append(promptLabel,complete,tools,message,preview);mount.append(header,panel);
   function choose(value){manual.setAttribute('aria-pressed',String(value==='manual'));ai.setAttribute('aria-pressed',String(value==='ai'));panel.hidden=value!=='ai';if(value==='manual')applied=null;}
   choose('manual');manual.onclick=()=>choose('manual');ai.onclick=()=>choose('ai');
   async function models(){
@@ -33,7 +42,7 @@ export function detailAssistant({mount,getSnapshot,onApply,onBusy=()=>{}}){
   ai.addEventListener('click',()=>{if(!provider.options.length)models();});
   async function generateDraft(parent=null,answers=[]){
     if(working)return;working=true;const token=++serial;onBusy(true);
-    for(const control of [manual,ai,prompt,provider,generate])control.disabled=true;
+    for(const control of [manual,ai,prompt,complete,provider,generate])control.disabled=true;
     generate.textContent='AI 正在整理…';message.textContent='正在调用真实模型。通常需要几十秒，当前表单保持原样。';
     try{
       let proposal=await request('/api/intake-proposals',jsonRequest('POST',{...getSnapshot(),prompt:parent?'请根据已提供的回答完善任务资料，仅询问尚未明确的关键问题。':prompt.value,provider:provider.value,
@@ -65,7 +74,7 @@ export function detailAssistant({mount,getSnapshot,onApply,onBusy=()=>{}}){
       apply.onclick=()=>{applied=proposal.id;onApply(proposal.result);message.textContent='草稿已填入表单。可继续修改，点击保存后生效。';apply.textContent='已填入表单 ✓';apply.disabled=true;};
       preview.append(apply);preview.hidden=false;message.textContent=proposal.result.questions?.length?'请回答问题，继续完善需求；也可以先将草稿填入表单。':'草稿已生成。先核对功能与验收条件，再选择采用。';
     }catch(error){message.textContent=error.message;}
-    finally{if(token===serial){working=false;onBusy(false);for(const control of [manual,ai,prompt,provider,generate])control.disabled=false;generate.textContent='重新生成草稿';}}
+    finally{if(token===serial){working=false;onBusy(false);for(const control of [manual,ai,prompt,complete,provider,generate])control.disabled=false;generate.textContent='重新生成草稿';}}
   }
   generate.onclick=()=>generateDraft();
   return {get proposalId(){return applied;},get working(){return working;},reset(){serial++;applied=null;working=false;prompt.value='';preview.hidden=true;preview.replaceChildren();choose('manual');}};

@@ -2,49 +2,51 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0b111c"><title>无遁 TestFix · 任务中心</title>
-  <link rel="stylesheet" href="/static/intake/intake.css"><link rel="stylesheet" href="/static/theme.css">
-  <link rel="stylesheet" href="/static/intake/details-assistant.css"><link rel="stylesheet" href="/static/tasks/tasks.css">
+  <meta name="theme-color" content="#0b1018"><title>无遁 Fix Agent · 任务中心</title>
+  <link rel="stylesheet" href="/static/theme.css"><link rel="stylesheet" href="/static/workbench.css?v=20261104-2">
+  <link rel="stylesheet" href="/static/intake/details-assistant.css"><link rel="stylesheet" href="/static/tasks/tasks.css?v=20261104-2">
   <script type="module" src="/static/tasks/tasks.js"></script>
 </head>
-<body>
-  <aside class="sidebar">
-    <a class="brand" href="/"><span class="brand-mark">无遁</span><span>TestFix<small>ENGINEERING WORKSPACE</small></span></a>
-    <span class="nav-label">工作空间</span>
-    <nav aria-label="工作台导航"><a href="/tasks" aria-current="page"><span>▤</span> 任务中心</a><a href="/intake"><span>＋</span> 创建任务</a><a href="/engineering"><span>⌘</span> 工程协作</a><a href="/explorer"><span>◇</span> 架构模型</a><a href="/hardware"><span>⌁</span> 硬件测试</a><a href="/web-testing"><span>↗</span> 网页验证</a><a href="/"><span>◫</span> 全部功能</a></nav>
-    <div class="storage-note"><span class="eyebrow">TASK LIBRARY</span><p>需求、原文件与整理记录，<br>都保存在每一项任务中。</p></div>
-    <footer><i></i> 本地保存<small>重启软件后仍可查看</small></footer>
+<body class="workbench-page">
+  <aside class="shell-sidebar">
+    <a class="brand" href="/tasks"><span class="brand-mark"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#logo"></use></svg></span><span>无遁 <b>Fix Agent</b></span></a>
+    <nav aria-label="工作空间"><a href="/tasks" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#tasks"></use></svg>任务中心</a><a href="/test-library"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#library"></use></svg>测试集</a><a href="/intake"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#plus"></use></svg>创建任务</a><a href="/implementation"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#code"></use></svg>补全与修改</a></nav>
+    <div class="workspace-location"><i></i><span>本地工作区</span></div>
   </aside>
   <main>
-    <header class="topbar"><span>工作空间 <b>/</b> 任务中心</span><button id="refresh" class="icon-button" aria-label="刷新任务中心">↻</button></header>
-    <section class="heading tasks-heading"><div><div class="eyebrow"><i></i> ENGINEERING TASK LIBRARY</div><h1>每个任务<span>，</span>都有去处。</h1><p>集中查看工程材料、功能需求与资料，接着上一次继续。</p></div><a class="primary" href="/intake">＋ 创建任务</a></section>
-    <section class="metrics" aria-label="任务统计"><button data-status=""><span>全部任务</span><strong id="count-all">—</strong><small>已保存至本地</small></button><button data-status="prepared"><span>已整理</span><strong id="count-prepared">—</strong><small>可查看需求与材料</small></button><button data-status="draft"><span>待整理</span><strong id="count-draft">—</strong><small>继续补充输入材料</small></button><button data-status="failed"><span>读取失败</span><strong id="count-failed">—</strong><small>查看原因与记录</small></button></section>
+    <header class="topbar"><h1>任务中心</h1><div><button id="refresh" class="icon-button" aria-label="刷新任务中心"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#refresh"></use></svg></button><a class="primary" href="/intake"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#plus"></use></svg>创建任务</a></div></header>
+    <section class="metrics" aria-label="任务统计"><button data-status=""><span>全部任务</span><strong id="count-all">—</strong></button><button data-status="prepared"><span>已整理</span><strong id="count-prepared">—</strong></button><button data-status="draft"><span>待整理</span><strong id="count-draft">—</strong></button><button data-status="failed"><span>读取失败</span><strong id="count-failed">—</strong></button></section>
     <div id="page-error" class="error" role="alert" hidden></div>
     <section class="task-workspace">
       <section class="task-library" aria-labelledby="library-title">
-        <header class="library-header"><h2 id="library-title">我的任务 <span id="total">0</span></h2><span id="loading" role="status" aria-live="polite"></span></header>
-        <div class="filters"><input id="search" type="search" placeholder="搜索名称、需求、附件…" aria-label="搜索任务" maxlength="200"><div><select id="filter-status" aria-label="筛选任务状态"><option value="">全部状态</option><option value="prepared">已整理</option><option value="draft">待整理</option><option value="reading">正在读取</option><option value="failed">读取失败</option></select><select id="filter-mode" aria-label="筛选输入方式"><option value="">全部来源</option><option value="upload">上传文件</option><option value="url">提供网址</option><option value="idea">描述新功能</option></select></div></div>
-        <div id="task-list" class="task-list" aria-label="任务列表"></div>
+        <header class="list-heading"><h2 id="library-title">我的任务 <span id="total">0</span></h2><span id="loading" role="status" aria-live="polite"></span></header>
+        <div class="filters"><label class="search-field"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#search"></use></svg><input id="search" type="search" placeholder="搜索名称、需求或附件" aria-label="搜索任务" maxlength="200"></label><div class="filter-selects"><select id="filter-status" aria-label="筛选任务状态"><option value="">全部状态</option><option value="prepared">已整理</option><option value="draft">待整理</option><option value="reading">正在读取</option><option value="failed">读取失败</option></select><select id="filter-mode" aria-label="筛选输入方式"><option value="">全部来源</option><option value="upload">上传文件</option><option value="url">提供网址</option><option value="idea">描述新功能</option></select></div></div>
+        <div id="task-list" class="task-list pane-scroll" role="region" aria-label="任务列表" tabindex="0"></div>
         <footer class="pagination"><button id="prev" type="button">← 上一页</button><span id="page-label"></span><button id="next" type="button">下一页 →</button></footer>
       </section>
       <section class="task-detail" aria-label="任务详情">
-        <div id="empty-detail" class="empty-state"><span class="empty-icon">▤</span><h2>选择一项任务</h2><p>查看资料、附件与整理进度，或创建一个新任务。</p><a href="/intake" class="secondary">＋ 创建任务</a></div>
+        <div id="empty-detail" class="empty-state"><span class="empty-icon" aria-hidden="true">☷</span><h2>选择一项任务</h2><p>查看并编辑功能需求、材料与处理记录。</p><a href="/intake" class="secondary">＋ 创建任务</a></div>
         <div id="detail" hidden>
-          <header class="detail-header"><div><div class="eyebrow" id="task-number"></div><h2 id="detail-title"></h2><p id="task-meta"></p></div><span id="detail-status" class="task-status"></span></header>
-          <div class="stage-note"><span>当前进度</span><p id="stage-message"></p></div>
-          <nav class="detail-tabs" aria-label="任务详情内容"><button type="button" data-tab="info" aria-selected="true">详细资料</button><button type="button" data-tab="files" aria-selected="false">原始材料 <span id="file-count">0</span></button><button type="button" data-tab="events" aria-selected="false">处理记录</button></nav>
-          <section id="tab-info">
-            <form id="detail-form">
-              <div class="details-heading"><h3>任务资料</h3><span id="details-source"></span></div>
-              <div id="details-assistant"></div>
-              <div class="requirements"><label class="field">任务名称 <span class="required">必填</span><input id="edit-title" required maxlength="120"></label><label class="field">问题与想实现的功能 <span class="required">必填</span><textarea id="edit-description" required maxlength="20000" rows="7"></textarea></label><label class="field">验收标准<textarea id="edit-acceptance" maxlength="12000" rows="6" placeholder="填写可观测、可重复执行的验收条件"></textarea></label><label class="field">运行环境<textarea id="edit-environment" maxlength="4000" rows="3" placeholder="系统、语言版本、服务依赖；未知项可待确认"></textarea></label></div>
-              <div class="save-note" id="save-message" role="status" aria-live="polite"></div>
-              <footer class="form-footer"><button type="button" id="discard" class="text-button">重新载入已保存资料</button><button type="submit" id="save" class="primary">保存资料 ✓</button></footer>
-            </form>
-          </section>
-          <section id="tab-files" class="detail-content" hidden><div id="source-url-block" hidden><h3>来源网址</h3><p id="source-url-value" class="wrap"></p></div><div id="materials"></div></section>
-          <section id="tab-events" class="detail-content" hidden><h3>处理记录</h3><ol id="task-events" class="task-events"></ol><div id="ai-record" hidden></div></section>
-          <footer class="detail-actions"><a id="implement" class="download" hidden>进入补全与修改 →</a><a id="handoff" class="secondary" hidden>↓ 下载任务资料</a><button id="prepare" class="secondary" type="button" hidden>整理输入材料 ↗</button><a id="continue-upload" class="secondary" hidden>继续上传材料 ↗</a></footer>
+          <header class="detail-header"><div class="detail-title-group"><span id="detail-symbol" class="detail-symbol"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#file"></use></svg></span><h2 id="detail-title"></h2></div><span id="detail-status" class="task-status"></span></header>
+          <nav class="detail-tabs" aria-label="任务详情内容"><button type="button" data-tab="info" aria-selected="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#code"></use></svg>需求资料</button><button type="button" data-tab="files" aria-selected="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#file"></use></svg>原始材料 <span id="file-count">0</span></button><button type="button" data-tab="events" aria-selected="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/workbench-icons.svg#clock"></use></svg>处理记录</button></nav>
+          <div class="detail-scroll pane-scroll" role="region" aria-label="任务资料编辑区" tabindex="0">
+            <section id="tab-info">
+              <form id="detail-form">
+                <div class="details-heading"><h3>功能需求</h3><span id="details-source"></span></div>
+                <div id="details-assistant"></div>
+                <div class="requirements">
+                  <label class="field"><span class="field-caption"><b aria-hidden="true">01</b>任务名称</span><input id="edit-title" required maxlength="120"></label>
+                  <label class="field"><span class="field-caption"><b aria-hidden="true">02</b>要实现的功能</span><textarea id="edit-description" required maxlength="20000" rows="3"></textarea></label>
+                  <label class="field"><span class="field-caption"><b aria-hidden="true">03</b>验收与测试要求</span><textarea id="edit-acceptance" maxlength="12000" rows="3" placeholder="填写可观测、可重复执行的验收条件"></textarea></label>
+                  <details class="extra-details"><summary>运行环境与任务信息</summary><label class="field">运行环境<textarea id="edit-environment" maxlength="4000" rows="3" placeholder="系统、语言版本、服务依赖；未知项可待确认"></textarea></label><p id="task-number"></p><p id="task-meta"></p><p id="stage-message"></p></details>
+                </div>
+              </form>
+            </section>
+            <section id="tab-files" class="detail-content" hidden><div id="source-url-block" hidden><h3>来源网址</h3><p id="source-url-value" class="wrap"></p></div><div id="materials"></div></section>
+            <section id="tab-events" class="detail-content" hidden><h3>处理记录</h3><ol id="task-events" class="task-events"></ol><div id="ai-record" hidden></div></section>
+          </div>
+          <div class="save-note" id="save-message" role="status" aria-live="polite"></div>
+          <footer class="detail-footer"><div class="edit-actions"><button type="button" id="discard" class="text-button">还原修改</button><button type="submit" form="detail-form" id="save" class="primary">保存资料</button></div><div class="detail-actions"><a id="implement" class="primary" hidden>进入补全与修改 →</a><a id="handoff" class="secondary" hidden>下载任务资料</a><button id="prepare" class="secondary" type="button" hidden>整理输入材料</button><a id="continue-upload" class="secondary" hidden>继续上传材料</a></div></footer>
         </div>
       </section>
     </section>

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>TaskBoard · 任务管理</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+  <header><a href="/" class="brand"><span>TB</span> TaskBoard</a><span class="service"><i></i> 本地演示工程</span></header>
+  <main>
+    <div class="eyebrow">PROJECT WORKSPACE</div><h1>把计划，变成进度。</h1><p class="intro">新增任务、查找计划、记录每一项完成。</p>
+    <section class="panel"><form id="create-form"><label for="new-title">新任务</label><div class="input-row"><input id="new-title" maxlength="120" required placeholder="今天准备完成什么？"><button type="submit">添加任务 ＋</button></div></form></section>
+    <section class="panel"><div class="list-header"><h2>任务清单 <small id="total">—</small></h2><form id="search-form"><input id="search" aria-label="按标题搜索任务" placeholder="搜索任务标题…"><button type="submit" class="secondary">搜索</button></form></div><div id="error" role="alert" hidden></div><ul id="tasks" aria-live="polite"></ul><footer><span id="page-label"></span><div><button id="previous" class="secondary">← 上一页</button><button id="next" class="secondary">下一页 →</button></div></footer></section>
+    <p class="demo-note">这是有意保留缺陷的测试工程，用于验证功能补全与回归流程。</p>
+  </main>
+</body>
+</html>

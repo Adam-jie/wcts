@@ -2,6 +2,8 @@
 import io
 import json
 from pathlib import Path
+import shutil
+from urllib.request import urlopen
 import zipfile
 import pytest
 from fastapi.testclient import TestClient
@@ -89,3 +91,30 @@ def test_preview_requires_an_accepted_current_candidate(application):
         'project_id': project['id'], 'tasks': [{'candidate_sha256': '0'*64}]}
     assert client.post(f'/api/project-runs/{identifier}/preview').status_code == 409
     assert app.state.application_previews.processes == {}
+
+
+def test_preview_reuse_preserves_the_accepted_candidate_binding(application):
+    from testfix.project_eval import _mapping_sha256
+    from testfix.project_tools import files_under
+
+    app, client, root = application
+    task = upload(client)
+    project = client.post('/api/intakes/'+task['id']+'/project', json={'revision': task['revision']}).json()
+    identifier = 'c' * 32
+    candidate = root / 'artifacts' / identifier / 'workspace/candidate'
+    shutil.copytree(ROOT / 'examples/taskboard-upload-demo', candidate,
+                    ignore=shutil.ignore_patterns('__pycache__'))
+    candidate_hash = _mapping_sha256(files_under(candidate))
+    app.state.store.runs[identifier] = {'id': identifier, 'status': 'completed', 'summary': {'accepted': 1},
+        'project_id': project['id'], 'tasks': [{'candidate_sha256': candidate_hash}]}
+
+    first = client.post(f'/api/project-runs/{identifier}/preview')
+    assert first.status_code == 200, first.text
+    process = app.state.application_previews.processes[identifier]['process']
+    second = client.post(f'/api/project-runs/{identifier}/preview')
+    assert second.status_code == 200, second.text
+    assert second.json() == first.json()
+    assert second.json()['candidate_sha256'] == candidate_hash
+    assert app.state.application_previews.processes[identifier]['process'] is process
+    with urlopen(second.json()['url'] + '/api/health') as response:
+        assert json.load(response) == {'status': 'ok', 'product': 'TaskBoard'}

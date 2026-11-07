@@ -1,6 +1,6 @@
 # 无遁 TestFix 桌面工程版
 
-直接双击 `dist/desktop/0.1.4/Wudun-TestFix-win32-x64/Wudun-TestFix.exe` 或桌面“无遁 TestFix”快捷方式。无需启动浏览器，不需要手动启动 Python 服务。软件打开独立窗口，自动启动自己的本地引擎，随后载入三维架构模型。
+直接双击 `dist/desktop/0.1.6/Wudun-TestFix-win32-x64/Wudun-TestFix.exe`。软件打开独立窗口，自动启动自己的本地引擎，随后载入三维架构模型。首次安装与启动命令见 [复现说明](reproduce.md)。
 
 这是使用当前工程、虚拟环境、模型配置和实验数据的 Windows 工程版。请保留原工程目录及完整的软件文件夹，不能只复制 exe。移动工程后，在软件右上角菜单中选择包含 `testfix`、`web`、`.venv` 的文件夹。此版本尚不包含面向其他电脑的完整依赖安装器。
 

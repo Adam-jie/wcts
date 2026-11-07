@@ -102,6 +102,7 @@ export function frameOf(run,position,timeline=timelineOf(run)){
     const node={id,title:`${roleName} Agent · ${item.skill_id==='repair-code'?'实现':'分析'} ${index+1}`,description:cut(item.title,1200),
       xyz:[(col-(Math.min(4,work.length)-1)/2)*4,.1,7+row*3.3],status:'pending',files:list(item.paths),
       message:'计划已登记，等待实际派工',specialists:special,taskId:item.id,round,parent:'module-generation',kind:'employee',
+      workerRole:role,
       workerId:observed?(observed.workerId||employee?.worker_id||''):'',assignmentId:observed?(observed.assignmentId||employee?.assignment_id||''):'',
       strategy:observed?employee?.execution_strategy||'':'',requirementIds:list(item.requirement_ids),dependsOn:list(item.depends_on)};
     nodes.push(node);map.set(id,node);
@@ -153,11 +154,14 @@ export function visibleFrame(frame,group='auto'){
   const byId=new Map(frame.nodes.map(n=>[n.id,n]));
   let selectedGroup=group==='auto'?byId.get(frame.current?.employee||frame.current?.target||frame.current?.skill)?.parent||ownerOf(frame.current?.skill||'plan-workflow'):group;
   if(!MODULES.some(m=>m.id===selectedGroup))selectedGroup='plan-workflow';
-  const roots=new Set(MODULES.map(m=>m.id)),children=frame.nodes.filter(n=>n.parent===selectedGroup&&n.id!=='repair-code');
+  const roots=new Set(MODULES.map(m=>m.id));
+  let children=frame.nodes.filter(n=>n.parent===selectedGroup&&n.id!=='repair-code');
+  const employeeView=selectedGroup==='module-generation'&&children.some(n=>n.kind==='employee');
+  if(employeeView)children=children.filter(n=>n.kind==='employee');
   const columns=children.length<=2?2:3;
   const positioned=children.map((node,index)=>({...node,xyz:[(index%columns-(Math.min(columns,children.length)-1)/2)*5,0,Math.floor(index/columns)*3.5]}));
   const bottom=Math.max(5,Math.ceil(children.length/columns)*3.5+1);
-  const nodes=[...frame.nodes.filter(n=>roots.has(n.id)||n.kind==='infrastructure').map(n=>n.kind==='infrastructure'?{...n,xyz:[0,-.4,bottom]}:n),...positioned],shown=new Set(nodes.map(n=>n.id));
+  const nodes=[...frame.nodes.filter(n=>(roots.has(n.id)&&!(employeeView&&n.kind==='module'))||n.kind==='infrastructure').map(n=>n.kind==='infrastructure'?{...n,xyz:[0,-.4,bottom]}:n),...positioned],shown=new Set(nodes.map(n=>n.id));
   function endpoint(id){return shown.has(id)?id:byId.get(id)?.parent||id;}
   const edges=[];for(const edge of frame.edges){const source=endpoint(edge.source),target=endpoint(edge.target);if(source!==target&&shown.has(source)&&shown.has(target))edges.push({...edge,source,target,id:`${source}>${target}:${edge.planned?edge.kind:'observed'}`});}
   return {...frame,nodes,edges:[...new Map(edges.map(e=>[e.id,e])).values()],selectedGroup,layout:{centerZ:(bottom-5)/2,spanZ:bottom+7}};

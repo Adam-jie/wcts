@@ -1,0 +1,25 @@
+{
+  "exit_code": 0,
+  "stdout": "{\r\n  \"project\": \"TestFix\",\r\n  \"checks\": 21,\r\n  \"passed\": true\r\n}\r\n",
+  "stderr": "",
+  "duration_s": 0.855,
+  "timeout": false,
+  "output_limit_exceeded": false,
+  "passed": true,
+  "actual_command": [
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli-delivery-2e350d21\\Scripts\\rich.exe",
+    "--json",
+    "-",
+    "--width",
+    "80",
+    "--export-svg",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\after\\output.svg",
+    "--export-html",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\json\\after\\output.html"
+  ],
+  "command_display": "rich --json - --width 80 --export-svg output.svg --export-html output.html",
+  "stdout_url": "assets/0e086080d45a/json/after/stdout.txt",
+  "stderr_url": "assets/0e086080d45a/json/after/stderr.txt",
+  "svg_url": "assets/0e086080d45a/json/after/output.svg",
+  "html_url": "assets/0e086080d45a/json/after/output.html"
+}

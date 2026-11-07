@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const make=(tag,className,text)=>{const node=document.createElement(tag);node.className=className||'';if(text!==undefined)node.textContent=text;return node;};
 
 export function createRunFlow(){
-  let run=null,timeline=[],position=0,following=true,playing=false,playTimer=null,selected='plan-workflow',frame=frameOf(null,0),scene=null,loading=false,disconnected=false,group='auto',nodeSignature='';
+  let run=null,timeline=[],position=0,following=true,playing=false,playTimer=null,selected='plan-workflow',frame=frameOf(null,0),scene=null,loading=false,disconnected=false,group='auto',nodeSignature='',teamSignature='',activitySignature='';
   const root=$('run-flow'),stage=$('flow-stage');
   function stop(){clearTimeout(playTimer);playTimer=null;playing=false;}
   function select(id){selected=id;const node=frame.nodes.find(n=>n.id===id);if(node?.kind==='module'||node?.kind==='controller')group=id;else if(node?.parent)group=node.parent;paint(false);}
@@ -31,6 +31,18 @@ export function createRunFlow(){
     $('flow-node-files').textContent=detail?.files?'文件：'+detail.files:'';
     $('flow-node-kind').textContent=detail?.kind||'所选节点';
     $('flow-node-contract').textContent=detail?.contract||'';$('flow-node-assignment').textContent=detail?.assignment||'';
+    const employees=frame.nodes.filter(n=>n.kind==='employee'),teamKey=JSON.stringify(employees.map(n=>[n.id,n.title,n.description,n.status,n.message]));
+    if(teamKey!==teamSignature){teamSignature=teamKey;const list=$('flow-team-list');list.replaceChildren();
+      if(!employees.length)list.append(make('p','flow-empty','等待主控生成任务分工'));
+      for(const employee of employees){const button=make('button','flow-team-item');button.type='button';button.dataset.state=employee.status;
+        const head=make('span','flow-team-head');head.append(make('strong','',employee.title),make('span','',STATUS[employee.status]||employee.status));
+        button.append(head,make('span','flow-team-task',employee.description),make('span','flow-team-update',employee.status==='pending'?'计划任务 · 等待主控派工':employee.message));button.onclick=()=>select(employee.id);list.append(button);}
+    }
+    const recent=timeline.slice(0,position).slice(-4).reverse(),activityKey=JSON.stringify(recent.map(e=>[e.id,e.kind,e.summary]));
+    if(activityKey!==activitySignature){activitySignature=activityKey;const list=$('flow-activity-list');list.replaceChildren();
+      if(!recent.length)list.append(make('li','flow-empty','等待运行事件'));
+      for(const item of recent){const row=make('li');row.append(make('strong','',item.kind),make('span','',item.summary));list.append(row);}
+    }
     const nextNodes=JSON.stringify(frame.nodes.map(n=>[n.id,n.parent,n.title,n.kind]));
     if(nextNodes!==nodeSignature){
       const opened=$('flow-nodes').querySelector('details')?.open,scroll=$('flow-nodes').parentElement.scrollTop;
@@ -67,7 +79,14 @@ export function createRunFlow(){
   document.addEventListener('keydown',event=>{if(event.key==='Escape')expand(false);});
   async function initialize(){
     if(loading||scene)return;loading=true;
-    try{const T=await import('/static/lab/vendor/three.module.min.js');scene=createScene(T,stage,$('flow-canvas'),$('flow-labels'),select);root.dataset.renderer='webgl';scene.update(visibleFrame(frame,group),selected,false,false);}
+    try{
+      const [T,{GLTFLoader},{clone}]=await Promise.all([import('/static/lab/vendor/three.module.min.js'),import('./vendor/GLTFLoader.js'),import('./vendor/SkeletonUtils.js')]);
+      // The local CSP disallows blob fetches; these six models share this palette.
+      const manager=new T.LoadingManager();manager.setURLModifier(url=>url.startsWith('blob:')?'/static/implementation/vendor/models/palette.png':url);
+      const loader=new GLTFLoader(manager),names=['CompanyCeo','ItEngineer','OfficeIntern','OfficeManager','Accountant','Receptionist'];
+      const assets=await Promise.all(names.map(name=>loader.loadAsync(`/static/implementation/vendor/models/${name}.glb`)));
+      scene=createScene(T,stage,$('flow-canvas'),$('flow-labels'),select,{clone,assets});root.dataset.renderer='webgl';scene.update(visibleFrame(frame,group),selected,false,false);
+    }
     catch(error){$('flow-canvas').hidden=true;$('flow-fallback').hidden=false;root.dataset.renderer='fallback';}
   }
   const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))initialize();},{rootMargin:'200px'});observer.observe(stage);
@@ -81,14 +100,14 @@ export function createRunFlow(){
   },disconnected(){disconnected=true;paint();}};
 }
 
-function createScene(T,host,canvas,labelHost,onSelect){
+function createScene(T,host,canvas,labelHost,onSelect,characters){
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'low-power'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setClearColor('#091321');renderer.outputColorSpace=T.SRGBColorSpace;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setClearColor('#091321');renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;
   const world=new T.Scene(),camera=new T.PerspectiveCamera(39,1,.1,160),objects=new T.Group(),links=new T.Group();
-  world.add(objects,links,new T.HemisphereLight(0xc3e9ff,0x101a30,2.4));
-  const key=new T.DirectionalLight(0xc3e4ff,3);key.position.set(1,12,5);world.add(key);
-  const rim=new T.DirectionalLight(0x5a7fdb,2.4);rim.position.set(-9,4,-6);world.add(rim);
+  world.add(objects,links,new T.HemisphereLight(0xc3e9ff,0x101a30,1.2));
+  const key=new T.DirectionalLight(0xc3e4ff,1.6);key.position.set(1,12,5);world.add(key);
+  const rim=new T.DirectionalLight(0x5a7fdb,1);rim.position.set(-9,4,-6);world.add(rim);
   const grid=new T.GridHelper(44,44,0x20435a,0x132a3b);grid.position.y=-.7;grid.material.transparent=true;grid.material.opacity=.5;world.add(grid);
   const floor=new T.Mesh(new T.PlaneGeometry(50,50),new T.MeshStandardMaterial({color:0x091321,metalness:.35,roughness:.8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.73;world.add(floor);
   const entries=new Map(),arcs=new Map(),raycaster=new T.Raycaster(),pointer=new T.Vector2(),scratch=new T.Vector3();
@@ -97,24 +116,48 @@ function createScene(T,host,canvas,labelHost,onSelect){
   const colors={pending:0x405674,running:0x73e3e3,completed:0x83cbb0,handed_off:0x83cbb0,warning:0xf6bf78,failed:0xf3949e,stopped:0x7892ad};
   function free(group){for(const child of [...group.children]){child.traverse(n=>{n.geometry?.dispose();if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material?.dispose();});group.remove(child);}}
   function mesh(geometry,color,x,y,z,metalness=.55){const m=new T.Mesh(geometry,new T.MeshStandardMaterial({color,roughness:.35,metalness}));m.position.set(x,y,z);return m;}
+  function avatar(node){
+    const roles={frontend:2,javascript:1,threejs:2,backend:1,database:4,integration:3,mcu:1,mpu:1,protocol:4,software:2};
+    const variant=node.kind==='controller'?0:(roles[node.workerRole]??1+([...node.id].reduce((n,c)=>n+c.charCodeAt(0),0)%5));
+    const asset=characters.assets[variant],model=characters.clone(asset.scene);
+    model.updateMatrixWorld(true);
+    model.traverse(item=>{if(item.isSkinnedMesh)item.skeleton.update();if(item.isMesh){item.geometry=item.geometry.clone();item.material=Array.isArray(item.material)?item.material.map(m=>m.clone()):item.material.clone();}});
+    const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
+    const scale=1.85/size.y;model.scale.setScalar(scale);model.position.set(-.38-center.x*scale,-.23-bounds.min.y*scale,-center.z*scale);
+    const mixer=new T.AnimationMixer(model),activeName=node.kind==='controller'?'Think':variant===1?'Type':'Think';
+    const idle=T.AnimationClip.findByName(asset.animations,'Idle'),active=T.AnimationClip.findByName(asset.animations,activeName)||idle;
+    const actions={idle:mixer.clipAction(idle),active:mixer.clipAction(active)};actions.idle.play();mixer.update(0);
+    return {model,mixer,actions,action:'idle'};
+  }
   function build(nodes){
     free(objects);entries.clear();labelHost.replaceChildren();
     for(const node of nodes){
       const group=new T.Group();group.position.set(...node.xyz);objects.add(group);
       const large=node.kind==='module'||node.kind==='controller',flat=['phase','artifact','algorithm','infrastructure'].includes(node.kind);
-      const base=mesh(new T.CylinderGeometry(1.03,1.14,.18,6),0x182d46,0,-.26,0);base.rotation.y=Math.PI/6;group.add(base);
-      const body=mesh(new T.BoxGeometry(1.38,.45,1.12),node.id==='plan-workflow'?0x24526a:0x243c5e,0,.1,0);group.add(body);
-      const chip=mesh(new T.BoxGeometry(.92,.12,.76),0x426080,0,.4,0);group.add(chip);
-      const core=mesh(new T.OctahedronGeometry(node.id==='plan-workflow'?.31:.21),0x9ae9e5,0,.74,0,.4);group.add(core);
-      const ring=new T.Mesh(new T.TorusGeometry(1.16,.022,6,64),new T.MeshBasicMaterial({color:colors.pending,transparent:true,opacity:.6}));ring.rotation.x=Math.PI/2;ring.position.y=-.08;group.add(ring);
-      for(let j=0;j<4;j++)for(const side of [-1,1])group.add(mesh(new T.BoxGeometry(.15,.08,.1),0x7d9bac,side*.78,.07,(j-1.5)*.24));
-      const edges=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1.4,.47,1.14)),new T.LineBasicMaterial({color:0x6f9aaf,transparent:true,opacity:.5}));edges.position.y=.1;group.add(edges);
+      const person=node.kind==='employee'||node.kind==='controller';
+      const base=mesh(new T.CylinderGeometry(person?1.34:1.03,person?1.42:1.14,.18,6),0x182d46,0,-.35,0);base.rotation.y=Math.PI/6;group.add(base);
+      const body=mesh(new T.BoxGeometry(person?.84:1.38,person?1.0:.45,person?.44:1.12),node.id==='plan-workflow'?0x2f7883:0x405f94,person?-.38:0,person?1.11:.1,0);body.visible=!person;group.add(body);
+      const core=mesh(new T.OctahedronGeometry(person?.11:.21),0x9ae9e5,person?-.38:0,person?2.12:.74,0,.4);group.add(core);
+      let actor=null;
+      if(person){
+        actor=avatar(node);group.add(actor.model);
+        group.add(mesh(new T.BoxGeometry(.82,.10,.68),0x3c627b,.87,.50,-.10));
+        for(const x of [.55,1.19])group.add(mesh(new T.BoxGeometry(.07,.80,.07),0x3b5872,x,.07,-.10));
+        group.add(mesh(new T.BoxGeometry(.62,.43,.07),0x35506c,.87,.91,-.27));
+        const screen=mesh(new T.BoxGeometry(.52,.33,.03),0x6cb6ca,.87,.91,-.22);screen.material.emissive.setHex(0x2a6678);screen.material.emissiveIntensity=.45;group.add(screen);
+      }else{
+        group.add(mesh(new T.BoxGeometry(.92,.12,.76),0x426080,0,.4,0));
+        for(let j=0;j<4;j++)for(const side of [-1,1])group.add(mesh(new T.BoxGeometry(.15,.08,.1),0x7d9bac,side*.78,.07,(j-1.5)*.24));
+      }
+      const ring=new T.Mesh(new T.TorusGeometry(person?1.42:1.16,.022,6,64),new T.MeshBasicMaterial({color:colors.pending,transparent:true,opacity:.6}));ring.rotation.x=Math.PI/2;ring.position.y=-.23;group.add(ring);
+      const edges=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1.4,.47,1.14)),new T.LineBasicMaterial({color:0x6f9aaf,transparent:true,opacity:.5}));edges.position.y=.1;edges.visible=!person;group.add(edges);
       if(large){group.scale.setScalar(1.35);body.material.color.setHex(node.kind==='controller'?0x2f697a:0x344d77);}
+      else if(person)group.scale.setScalar(1.18);
       if(flat){group.scale.set(1.25,.42,.85);core.visible=false;ring.visible=false;}
       if(node.kind==='infrastructure'){group.scale.set(7,.22,1.1);body.material.color.setHex(0x20394c);base.visible=false;edges.visible=false;}
       const label=make('button','flow-label');label.type='button';label.dataset.node=node.id;label.dataset.kind=node.kind;label.append(make('i'),make('span','',node.title));label.onclick=()=>onSelect(node.id);labelHost.append(label);
-      body.userData.nodeId=node.id;core.userData.nodeId=node.id;
-      entries.set(node.id,{group,body,core,ring,label,labelWidth:0,labelHeight:0});
+      group.traverse(item=>{if(item.isMesh)item.userData.nodeId=node.id;});
+      entries.set(node.id,{group,body,core,ring,label,person,actor,role:node.workerRole||'',labelWidth:0,labelHeight:0});
     }
   }
   function rebuildEdges(edges){
@@ -145,7 +188,7 @@ function createScene(T,host,canvas,labelHost,onSelect){
   canvas.addEventListener('pointerup',e=>{
     if(!drag)return;const moved=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY);drag=null;
     if(moved>6)return;const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);
-    const hit=raycaster.intersectObjects([...entries.values()].flatMap(n=>[n.body,n.core]),false)[0];if(hit)onSelect(hit.object.userData.nodeId);
+    const hit=raycaster.intersectObjects([...entries.values()].map(n=>n.group),true).find(item=>item.object.isMesh&&item.object.userData.nodeId);if(hit)onSelect(hit.object.userData.nodeId);
   });
   canvas.addEventListener('pointercancel',()=>{drag=null;});
   canvas.addEventListener('wheel',e=>{e.preventDefault();orbit.radius=Math.max(14,Math.min(58,orbit.radius*Math.exp(e.deltaY*.001)));cameraPose();},{passive:false});
@@ -170,10 +213,11 @@ function createScene(T,host,canvas,labelHost,onSelect){
   }
   function draw(now){
     frameId=0;if(disposed||!visible)return;frameId=requestAnimationFrame(draw);
-    if(document.hidden||now-lastFrame<32)return;lastFrame=now;
+    if(document.hidden||now-lastFrame<32)return;const delta=lastFrame?Math.min((now-lastFrame)/1000,.1):0;lastFrame=now;
     for(const item of entries.values()){
       const running=item.label.dataset.state==='running'&&canAnimate&&!reduced.matches;
-      item.core.position.y=.74+(running?Math.sin(now*.003)*.08:0);item.core.rotation.y=running?now*.0007:Math.PI/4;
+      item.core.position.y=(item.person?2.28:.74)+(running?Math.sin(now*.003)*.06:0);item.core.rotation.y=running?Math.sin(now*.0015)*.12:0;
+      if(item.actor){const next=running?'active':'idle';if(next!==item.actor.action){item.actor.actions[item.actor.action].fadeOut(.2);item.actor.actions[next].reset().fadeIn(.2).play();item.actor.action=next;}if(canAnimate&&!reduced.matches)item.actor.mixer.update(delta);}
       item.ring.material.opacity=running?.6+Math.sin(now*.004)*.3:item.label.dataset.selected==='true'?1:.5;
     }
     particles.forEach(({bead,halo},index)=>{const packet=packets[index],elapsed=packet?(now-packet.started)/1400:2,arc=packet&&arcs.get(packet.id);
@@ -189,6 +233,11 @@ function createScene(T,host,canvas,labelHost,onSelect){
     const nextEdges=value.edges.map(e=>e.id).join('|');if(nextEdges!==edgeSignature){edgeSignature=nextEdges;rebuildEdges(value.edges);}
     for(const edge of value.edges){const arc=arcs.get(edge.id);if(arc)arc.edge=edge;}
     for(const node of value.nodes){const item=entries.get(node.id),color=colors[node.status]||colors.pending;
+      if(item.actor&&item.role!==(node.workerRole||'')){
+        item.actor.mixer.stopAllAction();free(item.actor.model);item.group.remove(item.actor.model);
+        item.actor=avatar(node);item.role=node.workerRole||'';item.actor.model.traverse(part=>{if(part.isMesh)part.userData.nodeId=node.id;});item.group.add(item.actor.model);
+      }
+      item.label.querySelector('span').textContent=node.title;
       item.label.dataset.state=node.status;item.label.dataset.selected=String(node.id===selected);item.label.setAttribute('aria-pressed',String(node.id===selected));item.label.setAttribute('aria-label',`${node.title}，${STATUS[node.status]||node.status}`);
       item.ring.material.color.setHex(color);item.core.material.color.setHex(color);item.core.material.emissive.setHex(color);item.core.material.emissiveIntensity=node.status==='running'?.6:.12;
     }

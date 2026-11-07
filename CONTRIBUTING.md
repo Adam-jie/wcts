@@ -1,6 +1,6 @@
 # Contributing
 
-Use Python >= 3.11 and `uv sync --extra dev --locked`. Start with the WCTP-independent check command in README; run the complete suite only with an independently authorized, hash-matching WCTP dependency. Never copy private WCTP source into a pull request.
+Use Python >= 3.11 and `uv sync --extra dev --locked`. The authorized WCTP core is bundled with pinned SHA-256 values. Run the checks in `docs/reproduce.md`; keep the original dependency bytes and source manifest intact.
 
 Keep original, generated, regression and independent acceptance tests separate. Do not weaken assertions, remove failed requirements or replace model errors with replay success. Bind patches and reviews to the exact candidate hash, and preserve existing run evidence. New adapters need a pinned source revision, an explicit allowed-change scope and independent acceptance before reporting completion.
 

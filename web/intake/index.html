@@ -11,7 +11,7 @@
   <aside class="sidebar">
     <a class="brand" href="/"><span class="brand-mark">无遁</span><span>TestFix<small>ENGINEERING WORKSPACE</small></span></a>
     <span class="nav-label">工作空间</span>
-    <nav aria-label="工作台导航"><a href="/tasks"><span>▤</span> 任务中心</a><a href="/intake" aria-current="page"><span>＋</span> 创建任务</a><a href="/engineering"><span>⌘</span> 工程协作</a><a href="/explorer"><span>◇</span> 架构模型</a><a href="/hardware"><span>⌁</span> 硬件测试</a><a href="/web-testing"><span>↗</span> 网页验证</a><a href="/"><span>◫</span> 全部功能</a></nav>
+    <nav aria-label="工作台导航"><a href="/tasks"><span>▤</span> 任务中心</a><a href="/test-library"><span>▦</span> 测试集</a><a href="/intake" aria-current="page"><span>＋</span> 创建任务</a><a href="/implementation"><span>⌘</span> 补全与修改</a><a href="/explorer"><span>◇</span> 架构模型</a><a href="/hardware"><span>⌁</span> 硬件测试</a><a href="/web-testing"><span>↗</span> 网页验证</a></nav>
     <div class="recent-heading"><span class="nav-label">最近任务</span><button type="button" id="refresh-history" aria-label="刷新任务记录">↻</button></div>
     <div id="history" class="history"><p class="muted">正在读取记录…</p></div>
     <footer><i></i> 本地保存<small>文件与需求保留在当前工程中</small></footer>
@@ -48,7 +48,7 @@
       </section>
       <aside class="right-column">
         <section class="flow-card"><div class="eyebrow">TASK PIPELINE</div><h2>接下来如何流转</h2><ol><li><span>01</span><div><strong>接收输入</strong><p>保留原文件、网址和功能描述</p></div></li><li><span>02</span><div><strong>整理工程与需求</strong><p>识别源码、安装包和工程清单</p></div></li><li><span>03</span><div><strong>交接 CodeAgent 主控</strong><p>准备需求、环境与验收条件</p></div></li><li class="pending"><span>04</span><div><strong>补全与自动化测试</strong><p>后续环节 · 以实际运行记录为准</p></div></li></ol><p class="flow-footnote">创建后可在任务中心查看和编辑。选择 AI 生成时会调用所选模型整理草稿。</p></section>
-        <section class="result-card" id="result" aria-labelledby="result-title" hidden><div class="result-heading"><div class="eyebrow">TASK RECORD</div><span id="result-status" class="status"></span></div><h2 id="result-title"></h2><p id="result-message" class="result-message" role="status" aria-live="polite"></p><code id="result-id"></code><div id="result-files"></div><div id="result-requirements"></div><ol id="events" class="events"></ol><a id="view-in-center" class="download">在任务中心查看详情 ↗</a><a id="download-handoff" class="download" hidden>↓ 下载任务交接单</a><button type="button" id="new-task" class="secondary">创建下一个任务 ＋</button></section>
+        <section class="result-card" id="result" aria-labelledby="result-title" hidden><div class="result-heading"><div class="eyebrow">TASK RECORD</div><span id="result-status" class="status"></span></div><h2 id="result-title"></h2><p id="result-message" class="result-message" role="status" aria-live="polite"></p><code id="result-id"></code><div id="result-files"></div><div id="result-requirements"></div><ol id="events" class="events"></ol><a id="implement-task" class="download" hidden>进入补全与修改 ↗</a><a id="view-in-center" class="download">在任务中心查看详情 ↗</a><a id="download-handoff" class="download" hidden>↓ 下载任务交接单</a><button type="button" id="new-task" class="secondary">创建下一个任务 ＋</button></section>
       </aside>
     </div>
   </main>

@@ -39,7 +39,12 @@ def start_taskboard(python, project, database, directory, *, port=0):
         while time.monotonic() < deadline:
             if process.poll() is not None: raise ValueError('Application exited before readiness')
             if ready.is_file():
-                binding = json.loads(ready.read_text(encoding='utf-8'))
+                try:
+                    binding = json.loads(ready.read_text(encoding='utf-8'))
+                except PermissionError:
+                    # Windows can briefly deny reads immediately after the worker publishes readiness.
+                    time.sleep(.05)
+                    continue
                 if (binding['port'] != port or Path(binding['project']).resolve() != Path(project).resolve()
                         or not Path(binding['module']).resolve().is_relative_to(Path(project).resolve())):
                     raise ValueError('Application readiness is not bound to selected build')

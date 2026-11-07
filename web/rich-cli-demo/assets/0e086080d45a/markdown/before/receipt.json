@@ -1,0 +1,30 @@
+{
+  "exit_code": 0,
+  "stdout": "╔══════════════════════════════════════════════════════════════════════════════╗\r\n║                                TestFix report                                ║\r\n╚══════════════════════════════════════════════════════════════════════════════╝\r\n\r\nResult: passed                                                                  \r\n\r\n • CSV literal data preserved                                                   \r\n • CLI runs from installed package                                              \r\n",
+  "stderr": "",
+  "duration_s": 1.408,
+  "timeout": false,
+  "output_limit_exceeded": false,
+  "passed": true,
+  "actual_command": [
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\.venv-richcli\\Scripts\\python.exe",
+    "-I",
+    "-B",
+    "-X",
+    "utf8",
+    "-c",
+    "import sys,runpy,json;from pathlib import Path;sys.path.insert(0,'C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src');import rich_cli;assert Path(rich_cli.__file__).resolve().is_relative_to(Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\experiments\\\\rich-cli\\\\baseline\\\\src').resolve());Path('C:\\\\Users\\\\13645\\\\Documents\\\\ChatGPT\\\\华为ict\\\\web\\\\rich-cli-demo\\\\assets\\\\0e086080d45a\\\\markdown\\\\before\\\\source-binding.json').write_text(json.dumps({\"package\":rich_cli.__file__,\"mode\":\"pinned_upstream_src\"}),encoding=\"utf-8\");sys.argv=[\"rich\",*sys.argv[1:]];runpy.run_module(\"rich_cli\",run_name=\"__main__\")",
+    "report.md",
+    "--width",
+    "80",
+    "--export-svg",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\before\\output.svg",
+    "--export-html",
+    "C:\\Users\\13645\\Documents\\ChatGPT\\华为ict\\web\\rich-cli-demo\\assets\\0e086080d45a\\markdown\\before\\output.html"
+  ],
+  "command_display": "rich report.md --width 80 --export-svg output.svg --export-html output.html",
+  "stdout_url": "assets/0e086080d45a/markdown/before/stdout.txt",
+  "stderr_url": "assets/0e086080d45a/markdown/before/stderr.txt",
+  "svg_url": "assets/0e086080d45a/markdown/before/output.svg",
+  "html_url": "assets/0e086080d45a/markdown/before/output.html"
+}

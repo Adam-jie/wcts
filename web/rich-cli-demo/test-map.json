@@ -1,0 +1,782 @@
+{
+  "run_id": "2e350d21b5f04011a90ce5fa2c056656",
+  "created_at": "2026-10-15T05:30:57.281466+00:00",
+  "title": "Rich CLI：CSV/TSV字面值修复与真实测试地图",
+  "project_explained": "Rich CLI是把文件或stdin内容在终端中格式化显示的Python命令行工具。本次工作修复CSV/TSV数据被误当Rich markup的问题，并保持HTML/SVG导出中的可见文本；没有把项目变成网页应用。",
+  "before_after": {
+    "before": "CSV包含[red]literal[/red]时标签可能被解释；包含[/bold]时真实baseline报closing tag不匹配，命令失败。",
+    "after": "同类数据在CSV/TSV中保留括号，命令退出0；--print仍按用户意图解释markup。依据通过的真实断言，不是预写模拟输出。"
+  },
+  "summary": {
+    "generated_baseline": {
+      "passed": 3,
+      "total": 15
+    },
+    "generated_candidate": {
+      "passed": 15,
+      "total": 15
+    },
+    "independent_baseline": {
+      "passed": 3,
+      "total": 21
+    },
+    "independent_candidate": {
+      "passed": 21,
+      "total": 21
+    },
+    "frozen_behavior_regression": {
+      "passed": 13,
+      "total": 13
+    },
+    "upstream": {
+      "passed": 1,
+      "total": 1
+    },
+    "all_regression": {
+      "passed": 14,
+      "total": 14
+    },
+    "wheel_build_passed": true,
+    "real_cli": {
+      "passed": 16,
+      "total": 16
+    },
+    "model_calls": 8,
+    "duration_s": 351.733
+  },
+  "test_environment": {
+    "cli_args_width": 160,
+    "COLUMNS": 200,
+    "LINES": 60,
+    "python_utf8": true,
+    "method": "生成测试使用真实Click命令对象和CliRunner；真实CLI子进程与wheel检查属于独立宿主交付阶段。"
+  },
+  "generated_cases": [
+    {
+      "title": "显式 CSV：表头和单元格按字面值显示",
+      "requirement": "R1",
+      "input": {
+        "args": [
+          "-",
+          "--csv",
+          "--width",
+          "160"
+        ],
+        "stdin": "[bold]name[/bold],value\n[red]literal[/red],2\n[/bold],3\n[unknown]x[/unknown],4\nhttps://example.test/a[b],5\n雪☃—!?[](),6\n"
+      },
+      "expected": "退出码为0；样式标签、未知标签、不匹配结束标签、URL方括号及中文符号仍出现在输出中。",
+      "number": 1,
+      "case_id": "test_csv_literal_data::test_r1_explicit_csv_preserves_markup_like_headers_and_cells",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 51,
+      "id": "test_csv_literal_data::test_r1_explicit_csv_preserves_markup_like_headers_and_cells"
+    },
+    {
+      "title": "逗号分隔",
+      "requirement": "R2",
+      "input": {
+        "delimiter": ",",
+        "headers": [
+          "first",
+          "second",
+          "third"
+        ],
+        "row": [
+          "[red]one[/red]",
+          "two,quoted",
+          "[/bold]"
+        ],
+        "entry": "stdin + --csv"
+      },
+      "expected": "退出码0；引号内逗号仍是同一字段；三个单元格按原次序显示且括号不丢失。",
+      "number": 2,
+      "case_id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[,-comma]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 77,
+      "id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[,-comma]"
+    },
+    {
+      "title": "Tab 分隔",
+      "requirement": "R2",
+      "input": {
+        "delimiter": "\t",
+        "headers": [
+          "first",
+          "second",
+          "third"
+        ],
+        "row": [
+          "[red]one[/red]",
+          "two,quoted",
+          "[/bold]"
+        ],
+        "entry": "stdin + --csv"
+      },
+      "expected": "与逗号用例相同的解析、字面值及列顺序断言。",
+      "number": 3,
+      "case_id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[\\t-tab]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 77,
+      "id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[\\t-tab]"
+    },
+    {
+      "title": "竖线分隔",
+      "requirement": "R2",
+      "input": {
+        "delimiter": "|",
+        "headers": [
+          "first",
+          "second",
+          "third"
+        ],
+        "row": [
+          "[red]one[/red]",
+          "two,quoted",
+          "[/bold]"
+        ],
+        "entry": "stdin + --csv"
+      },
+      "expected": "与逗号用例相同的解析、字面值及列顺序断言。",
+      "number": 4,
+      "case_id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[|-pipe]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 77,
+      "id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[|-pipe]"
+    },
+    {
+      "title": "分号分隔",
+      "requirement": "R2",
+      "input": {
+        "delimiter": ";",
+        "headers": [
+          "first",
+          "second",
+          "third"
+        ],
+        "row": [
+          "[red]one[/red]",
+          "two,quoted",
+          "[/bold]"
+        ],
+        "entry": "stdin + --csv"
+      },
+      "expected": "与逗号用例相同的解析、字面值及列顺序断言。",
+      "number": 5,
+      "case_id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[;-semicolon]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 77,
+      "id": "test_csv_literal_data::test_r2_explicit_csv_supported_delimiters_preserve_parsing[;-semicolon]"
+    },
+    {
+      "title": "按 .csv 后缀自动识别、重复表头和带逗号字段",
+      "requirement": "R2",
+      "input": {
+        "file": "literal.csv",
+        "contents": "[h],[h],third\n[red]left[/red],\"a,b\",[/bold]\nplain,c,d\n",
+        "args": [
+          "literal.csv",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "退出码0；[h]表头出现两次；[red]left[/red]、a,b、[/bold] 保留原值与列顺序。",
+      "number": 6,
+      "case_id": "test_csv_literal_data::test_r2_auto_detected_csv_duplicate_headers_and_quoted_cell",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 88,
+      "id": "test_csv_literal_data::test_r2_auto_detected_csv_duplicate_headers_and_quoted_cell"
+    },
+    {
+      "title": "按 .tsv 后缀自动识别",
+      "requirement": "R2",
+      "input": {
+        "file": "literal.tsv",
+        "contents": "name\tvalue\n[blue]雪[/blue]\t[/italic]\nplain\tok\n",
+        "args": [
+          "literal.tsv",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "退出码0；表头、中文标签单元格和未配对的[/italic]均原样可见。",
+      "number": 7,
+      "case_id": "test_csv_literal_data::test_r2_auto_detected_tsv_preserves_literal_data",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 103,
+      "id": "test_csv_literal_data::test_r2_auto_detected_tsv_preserves_literal_data"
+    },
+    {
+      "title": "只取前两行",
+      "requirement": "R2",
+      "input": {
+        "stdin": "name,value\n[first],1\n[second],2\n[third],3\n",
+        "args": [
+          "-",
+          "--csv",
+          "--head",
+          "2",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "[first]和[second]按顺序出现；[third]不出现。",
+      "number": 8,
+      "case_id": "test_csv_literal_data::test_r2_head_selects_first_data_rows_without_reordering",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 115,
+      "id": "test_csv_literal_data::test_r2_head_selects_first_data_rows_without_reordering"
+    },
+    {
+      "title": "只取后两行",
+      "requirement": "R2",
+      "input": {
+        "stdin": "name,value\n[first],1\n[second],2\n[third],3\n",
+        "args": [
+          "-",
+          "--csv",
+          "--tail",
+          "2",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "[first]不出现；[second]和[third]按顺序出现。",
+      "number": 9,
+      "case_id": "test_csv_literal_data::test_r2_tail_selects_last_data_rows_without_reordering",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 123,
+      "id": "test_csv_literal_data::test_r2_tail_selects_last_data_rows_without_reordering"
+    },
+    {
+      "title": "同时传 head/tail 保留既有优先级",
+      "requirement": "R2",
+      "input": {
+        "stdin": "name,value\n[first],1\n[middle],2\n[last],3\n",
+        "args": [
+          "-",
+          "--csv",
+          "--head",
+          "1",
+          "--tail",
+          "1",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "保留基线CSV逻辑：head优先，只出现[first]，不出现[middle]或[last]。",
+      "number": 10,
+      "case_id": "test_csv_literal_data::test_r2_head_precedence_when_head_and_tail_are_both_supplied",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 131,
+      "id": "test_csv_literal_data::test_r2_head_precedence_when_head_and_tail_are_both_supplied"
+    },
+    {
+      "title": "HTML 导出保留字面值",
+      "requirement": "R3",
+      "input": {
+        "args": [
+          "-",
+          "--csv",
+          "--width",
+          "160",
+          "--export-html",
+          "table.html"
+        ],
+        "stdin": "[bold]header[/bold],other\n[red]literal[/red],[/bold]\nhttps://example.test/[x],雪—[]\n"
+      },
+      "expected": "真实命令退出0并写出HTML；HTMLParser提取可见文本、解实体并归一化空白后，每个期望数据token都同时存在于控制台与导出。",
+      "number": 11,
+      "case_id": "test_csv_literal_data::test_r3_exports_retain_console_visible_literal_data[--export-html-table.html]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 140,
+      "id": "test_csv_literal_data::test_r3_exports_retain_console_visible_literal_data[--export-html-table.html]"
+    },
+    {
+      "title": "SVG 导出保留字面值",
+      "requirement": "R3",
+      "input": {
+        "args": [
+          "-",
+          "--csv",
+          "--width",
+          "160",
+          "--export-svg",
+          "table.svg"
+        ],
+        "stdin": "[bold]header[/bold],other\n[red]literal[/red],[/bold]\nhttps://example.test/[x],雪—[]\n"
+      },
+      "expected": "真实命令退出0并写出SVG；解析XML可见文本并归一化空白后，每个期望数据token都同时存在于控制台与导出。",
+      "number": 12,
+      "case_id": "test_csv_literal_data::test_r3_exports_retain_console_visible_literal_data[--export-svg-table.svg]",
+      "baseline_status": "failure",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 140,
+      "id": "test_csv_literal_data::test_r3_exports_retain_console_visible_literal_data[--export-svg-table.svg]"
+    },
+    {
+      "title": "显式 --print 继续解释用户样式",
+      "requirement": "R4",
+      "input": {
+        "args": [
+          "[bold red]styled literal[/bold red]",
+          "--print",
+          "--width",
+          "160"
+        ]
+      },
+      "expected": "退出码0，styled literal可见，原始[bold red]和[/bold red]标签不可见；此断言未验证终端具体颜色。",
+      "number": 13,
+      "case_id": "test_csv_literal_data::test_r4_print_still_interprets_intentional_markup",
+      "baseline_status": "passed",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 163,
+      "id": "test_csv_literal_data::test_r4_print_still_interprets_intentional_markup"
+    },
+    {
+      "title": "普通 CSV、JSON、Markdown 仍可用",
+      "requirement": "R4",
+      "input": {
+        "files": {
+          "ordinary.csv": "name,value\nalpha,1\nbeta,2\n",
+          "ordinary.json": "{\"answer\": 42}",
+          "ordinary.md": "# Heading\n\nordinary text\n"
+        },
+        "args": "分别调用对应文件，均带 --width 160"
+      },
+      "expected": "三个调用均退出0；CSV含name/value/alpha/beta，JSON含answer/42，Markdown含Heading和ordinary text。",
+      "number": 14,
+      "case_id": "test_csv_literal_data::test_r4_ordinary_csv_json_and_markdown_behaviors",
+      "baseline_status": "passed",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 170,
+      "id": "test_csv_literal_data::test_r4_ordinary_csv_json_and_markdown_behaviors"
+    },
+    {
+      "title": "帮助、版本和未知参数处理",
+      "requirement": "R4",
+      "input": {
+        "commands": [
+          [
+            "--help"
+          ],
+          [
+            "--version"
+          ],
+          [
+            "--definitely-invalid"
+          ]
+        ]
+      },
+      "expected": "帮助退出0并含Usage及--csv；版本退出0且匹配数字.数字.数字；未知参数非0且含No such option。",
+      "number": 15,
+      "case_id": "test_csv_literal_data::test_r4_help_version_and_invalid_argument_handling",
+      "baseline_status": "passed",
+      "candidate_status": "passed",
+      "source": "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "source_line": 187,
+      "id": "test_csv_literal_data::test_r4_help_version_and_invalid_argument_handling"
+    }
+  ],
+  "independent_groups": [
+    {
+      "title": "单元格字面值",
+      "count": 10,
+      "passed": 10,
+      "description": "样式样字符串、未知/结束标签、数组或URL括号、中文、emoji及link样文本。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "表头字面值",
+      "count": 3,
+      "passed": 3,
+      "description": "样式样表头、结束标签及未知标签不被解释。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "文件与标准输入一致",
+      "count": 2,
+      "passed": 2,
+      "description": "同一字面值规则同时适用于文件与stdin。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "TSV",
+      "count": 1,
+      "passed": 1,
+      "description": "TSV表头和单元格也保留字面值。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "head/tail选行",
+      "count": 2,
+      "passed": 2,
+      "description": "选行功能仍生效，所选数据保留括号。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "重复表头",
+      "count": 1,
+      "passed": 1,
+      "description": "重复列名不丢失、不去重。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    },
+    {
+      "title": "HTML/SVG导出",
+      "count": 2,
+      "passed": 2,
+      "description": "导出可见文本保留字面值及解码后的实体。",
+      "evidence": "report.json/tasks[0]/acceptance/cases",
+      "scope_note": "依据已完成报告的case名称分组；未打开私有验收源码。"
+    }
+  ],
+  "frozen_regression_groups": [
+    {
+      "title": "普通CSV/TSV解析及数据保留",
+      "count": 5,
+      "checks": [
+        "普通CSV表格",
+        "引号内逗号",
+        "TSV自动识别",
+        "数字正负号和小数写法",
+        "Unicode CSV"
+      ],
+      "passed": 5,
+      "baseline_passed": 5
+    },
+    {
+      "title": "行选择",
+      "count": 2,
+      "checks": [
+        "head首行",
+        "tail末行"
+      ],
+      "passed": 2,
+      "baseline_passed": 2
+    },
+    {
+      "title": "其他已覆盖格式与显式markup",
+      "count": 3,
+      "checks": [
+        "JSON stdin",
+        "基础Markdown",
+        "显式--print继续解释markup"
+      ],
+      "passed": 3,
+      "baseline_passed": 3
+    },
+    {
+      "title": "CLI接口",
+      "count": 3,
+      "checks": [
+        "帮助选项说明",
+        "版本格式",
+        "未知选项错误"
+      ],
+      "passed": 3,
+      "baseline_passed": 3
+    }
+  ],
+  "upstream_note": "另外1项原仓库测试检查重复Click选项注册；并入14项回归，未把它计作13项自建冻结回归。",
+  "llm_stages": [
+    {
+      "number": 1,
+      "skill_id": "plan-workflow",
+      "title": "任务与约束规划",
+      "what_it_did": "按R1—R4列出4个目标并采用必需的9能力顺序；限改src/rich_cli/__main__.py，保留评审与独立交付门禁。",
+      "execution_evidence": "模型输出结构化计划；ILP合法计划来自宿主，规划本身不是测试通过证据。",
+      "actual_symbols_or_files": [
+        "src/rich_cli/__main__.py"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 26101,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\plan-workflow\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\001-plan-workflow\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\001-plan-workflow\\result.json",
+      "action": "按R1—R4列出4个目标并采用必需的9能力顺序；限改src/rich_cli/__main__.py，保留评审与独立交付门禁。",
+      "evidence": "模型输出结构化计划；ILP合法计划来自宿主，规划本身不是测试通过证据。"
+    },
+    {
+      "number": 2,
+      "skill_id": "explore-repository",
+      "title": "读公开源码快照",
+      "what_it_did": "列出6个探索候选，定位CSV Table、CSV入口、PRINT分支、HTML/SVG导出、pyproject入口和原有测试。",
+      "execution_evidence": "读取提供的公开源码快照并返回候选清单；没有声称调用shell搜索或运行工程。",
+      "actual_symbols_or_files": [
+        "src/rich_cli/__main__.py:render_csv",
+        "src/rich_cli/__main__.py:main",
+        "pyproject.toml",
+        "tests/test_main.py"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 26172,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\explore-repository\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\002-explore-repository\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\002-explore-repository\\result.json",
+      "action": "列出6个探索候选，定位CSV Table、CSV入口、PRINT分支、HTML/SVG导出、pyproject入口和原有测试。",
+      "evidence": "读取提供的公开源码快照并返回候选清单；没有声称调用shell搜索或运行工程。"
+    },
+    {
+      "number": 3,
+      "skill_id": "ground-code",
+      "title": "代码实体与源码哈希绑定",
+      "what_it_did": "把R1—R4绑定到render_csv、main/read_resource、PRINT分支、export pipeline、run和注册入口。",
+      "execution_evidence": "6条定位记录：源码实现项located，pyproject与原测试是partial；此时没有运行结果。",
+      "actual_symbols_or_files": [
+        "render_csv",
+        "main",
+        "read_resource",
+        "run",
+        "project.scripts",
+        "test_duplicate_option_flags_raises_exception"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 26861,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\ground-code\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\003-ground-code\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\003-ground-code\\result.json",
+      "action": "把R1—R4绑定到render_csv、main/read_resource、PRINT分支、export pipeline、run和注册入口。",
+      "evidence": "6条定位记录：源码实现项located，pyproject与原测试是partial；此时没有运行结果。"
+    },
+    {
+      "number": 4,
+      "skill_id": "analyze-requirements",
+      "title": "需求与缺口分析",
+      "what_it_did": "判断R1/R3缺失，R2/R4部分已有；规定CSV按字面值、--print保留解释、导出可见文本一致。",
+      "execution_evidence": "静态差距分析；没有把尚未执行的构建、独立验收或CLI标为成功。",
+      "actual_symbols_or_files": [
+        "render_csv",
+        "main PRINT branch",
+        "main export_html/export_svg pipeline"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 28026,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\analyze-requirements\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\004-analyze-requirements\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\004-analyze-requirements\\result.json",
+      "action": "判断R1/R3缺失，R2/R4部分已有；规定CSV按字面值、--print保留解释、导出可见文本一致。",
+      "evidence": "静态差距分析；没有把尚未执行的构建、独立验收或CLI标为成功。"
+    },
+    {
+      "number": 5,
+      "skill_id": "generate-tests",
+      "title": "生成测试并交宿主执行",
+      "what_it_did": "生成一份test_csv_literal_data.py，11个测试函数经参数化收集为15个case，冻结后供原版/候选使用。",
+      "execution_evidence": "宿主真实运行原版：生成3/15、原有+冻结回归14/14；模型生成阶段本身没有执行测试。",
+      "actual_symbols_or_files": [
+        "workspace/generated_tests/test_csv_literal_data.py"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 31149,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\generate-tests\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\005-generate-tests\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\005-generate-tests\\result.json",
+      "action": "生成一份test_csv_literal_data.py，11个测试函数经参数化收集为15个case，冻结后供原版/候选使用。",
+      "evidence": "宿主真实运行原版：生成3/15、原有+冻结回归14/14；模型生成阶段本身没有执行测试。"
+    },
+    {
+      "number": 6,
+      "skill_id": "diagnose-results",
+      "title": "依据真实失败日志诊断",
+      "what_it_did": "读取12个断言失败：[/bold]触发Markup解析错误，其他括号被吞；定位raw str进入Table.add_column/add_row的渲染边界。",
+      "execution_evidence": "引用源绑定的真实baseline输出：退出-1且closing tag不匹配；无collection/binding/timeout错误，归为功能失败。",
+      "actual_symbols_or_files": [
+        "render_csv",
+        "Table.add_column",
+        "Table.add_row"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 30568,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\diagnose-results\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\006-diagnose-results\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\006-diagnose-results\\result.json",
+      "action": "读取12个断言失败：[/bold]触发Markup解析错误，其他括号被吞；定位raw str进入Table.add_column/add_row的渲染边界。",
+      "evidence": "引用源绑定的真实baseline输出：退出-1且closing tag不匹配；无collection/binding/timeout错误，归为功能失败。"
+    },
+    {
+      "number": 7,
+      "skill_id": "repair-code",
+      "title": "生成并由宿主写入补丁",
+      "what_it_did": "输出唯一允许文件src/rich_cli/__main__.py：表头改Text(column)，单元格改Text(value)；宿主受控写入。",
+      "execution_evidence": "实际候选whole hash已记录；宿主真实复测生成15/15、回归14/14。文件另有非功能排版与docstring删减，不能描述为纯两行改动。",
+      "actual_symbols_or_files": [
+        "src/rich_cli/__main__.py:550",
+        "src/rich_cli/__main__.py:559",
+        "render_csv"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 40687,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\repair-code\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\007-repair-code\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\007-repair-code\\result.json",
+      "action": "输出唯一允许文件src/rich_cli/__main__.py：表头改Text(column)，单元格改Text(value)；宿主受控写入。",
+      "evidence": "实际候选whole hash已记录；宿主真实复测生成15/15、回归14/14。文件另有非功能排版与docstring删减，不能描述为纯两行改动。"
+    },
+    {
+      "number": 8,
+      "skill_id": "review-patch",
+      "title": "对当前候选独立模型评审",
+      "what_it_did": "针对SHA781bef3a…的实际diff与公开复测结果给出approved=true、findings=[]。",
+      "execution_evidence": "评审输入已含生成15/15、回归14/14；模型明确独立验收、wheel、真实CLI在此刻仍未执行，不用评审结论代替这些门禁。",
+      "actual_symbols_or_files": [
+        "render_csv",
+        "main PRINT branch",
+        "candidate_sha256=781bef3aa59cad4e909e7a117ff8330559aacbad7dac4867925ec645a769b4c1"
+      ],
+      "status": "completed",
+      "model_call_status": "completed",
+      "provider": "codex_cli",
+      "requested_model": "gpt-5.6-sol",
+      "actual_model": null,
+      "usage_total_tokens": 28463,
+      "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\review-patch\\attempt-1.json",
+      "model_request": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\008-review-patch\\request.json",
+      "model_result": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\model_calls\\008-review-patch\\result.json",
+      "action": "针对SHA781bef3a…的实际diff与公开复测结果给出approved=true、findings=[]。",
+      "evidence": "评审输入已含生成15/15、回归14/14；模型明确独立验收、wheel、真实CLI在此刻仍未执行，不用评审结论代替这些门禁。"
+    }
+  ],
+  "ninth_capability": {
+    "skill_id": "verify-delivery",
+    "kind": "deterministic_host_execution_no_llm_call",
+    "result": "同一冻结独立验收原版3/21、候选21/21；wheel成功；从wheel执行的真实CLI16/16；最终review/source/protected哈希门禁通过。",
+    "artifact": "artifacts\\2e350d21b5f04011a90ce5fa2c056656\\capabilities\\verify-delivery\\attempt-1.json"
+  },
+  "coverage_limits": [
+    "本次目标是CSV/TSV字面值，不是Rich CLI全功能认证。",
+    "未在这些测试中验证IPYNB/Jupyter Notebook、RST、HTTP/HTTPS网络资源与网络错误。",
+    "未验证交互pager、inspect表达式、语法高亮的广泛语言集合、所有theme/panel/padding/对齐组合、终端resize或彩色像素效果。",
+    "HTML/SVG导出只检查解码/提取文字并归一化空白后，预期数据token同时出现在控制台和导出；没有比较完整文字流、额外文字、像素截图或完整DOM结构等价。",
+    "并未涵盖全部畸形CSV、任意编码、超大数据性能、并发负载或所有操作系统/终端尺寸。",
+    "生成测试中基础JSON/Markdown/help等是兼容性冒烟覆盖，不能据此宣称其全部高级功能已测。"
+  ],
+  "evidence_policy": {
+    "sources": [
+      "artifacts/2e350d21b5f04011a90ce5fa2c056656/report.json",
+      "artifacts/2e350d21b5f04011a90ce5fa2c056656/workspace/generated_tests/test_csv_literal_data.py",
+      "artifacts/2e350d21b5f04011a90ce5fa2c056656/capabilities",
+      "artifacts/2e350d21b5f04011a90ce5fa2c056656/model_calls"
+    ],
+    "private_acceptance_source_opened": false,
+    "new_model_calls": 0,
+    "new_test_execution": false,
+    "actual_model_note": "真实provider调用记录为codex_cli；请求model=gpt-5.6-sol，但provider未回报actual_model，因此不将实际底层型号写成已确认。"
+  },
+  "hashes": {
+    "candidate_whole_sha256": "781bef3aa59cad4e909e7a117ff8330559aacbad7dac4867925ec645a769b4c1",
+    "generated_test_sha256": "f1f675517f663cc4cc611976d5717b139e650c8deb99e35284ac9b058c45925d"
+  },
+  "regression_groups": [
+    {
+      "title": "普通CSV/TSV解析及数据保留",
+      "count": 5,
+      "checks": [
+        "普通CSV表格",
+        "引号内逗号",
+        "TSV自动识别",
+        "数字正负号和小数写法",
+        "Unicode CSV"
+      ],
+      "passed": 5,
+      "baseline_passed": 5
+    },
+    {
+      "title": "行选择",
+      "count": 2,
+      "checks": [
+        "head首行",
+        "tail末行"
+      ],
+      "passed": 2,
+      "baseline_passed": 2
+    },
+    {
+      "title": "其他已覆盖格式与显式markup",
+      "count": 3,
+      "checks": [
+        "JSON stdin",
+        "基础Markdown",
+        "显式--print继续解释markup"
+      ],
+      "passed": 3,
+      "baseline_passed": 3
+    },
+    {
+      "title": "CLI接口",
+      "count": 3,
+      "checks": [
+        "帮助选项说明",
+        "版本格式",
+        "未知选项错误"
+      ],
+      "passed": 3,
+      "baseline_passed": 3
+    }
+  ],
+  "not_covered": [
+    "本次目标是CSV/TSV字面值，不是Rich CLI全功能认证。",
+    "未在这些测试中验证IPYNB/Jupyter Notebook、RST、HTTP/HTTPS网络资源与网络错误。",
+    "未验证交互pager、inspect表达式、语法高亮的广泛语言集合、所有theme/panel/padding/对齐组合、终端resize或彩色像素效果。",
+    "HTML/SVG导出只检查解码/提取文字并归一化空白后，预期数据token同时出现在控制台和导出；没有比较完整文字流、额外文字、像素截图或完整DOM结构等价。",
+    "并未涵盖全部畸形CSV、任意编码、超大数据性能、并发负载或所有操作系统/终端尺寸。",
+    "生成测试中基础JSON/Markdown/help等是兼容性冒烟覆盖，不能据此宣称其全部高级功能已测。"
+  ]
+}

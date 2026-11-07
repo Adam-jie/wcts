@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>rich-cli 实际运行 · 修复前后对照</title>
+  <link rel="stylesheet" href="style.css"><script src="app.js" defer></script>
+  <link rel="stylesheet" href="/static/theme.css">
+</head>
+<body>
+<header class="top"><a href="/">TestFix 工作台</a><span>真实命令输出 · 本地演示</span></header>
+<main>
+  <p class="eyebrow">GITHUB PROJECT / RICH-CLI</p>
+  <h1>同一份输入，<br>修复前后怎么变了？</h1>
+  <p class="intro">直接查看原版与安装后的修复版运行结果、报错、SVG/HTML 导出。这里展示实际命令执行记录，切换场景不会发起新的模型调用。</p>
+  <p><a href="#outputs">直接查看原版 / 修复版终端输出 ↓</a> · <a href="#tests-title">查看具体测试输入与预期 ↓</a></p>
+  <div class="purpose-grid">
+    <article><span class="label">我们开发的系统</span><h2>TestFix-Agent</h2><p>读需求与代码 → 生成测试 → 复现缺陷 → 生成补丁 → 独立评审 → 执行回归、构建与验收。</p></article>
+    <article><span class="label">这次拿来修复的工程</span><h2>rich-cli</h2><p>终端文件查看工具：CSV/TSV 显示成表格，JSON 格式化，Markdown 渲染，代码高亮；还能导出 HTML/SVG。</p><a href="https://github.com/Textualize/rich-cli" target="_blank" rel="noopener">GitHub 原项目 ↗</a></article>
+  </div>
+  <section class="result-section" aria-labelledby="demo-title">
+    <p class="eyebrow">01 / 实际运行效果</p><h2 id="demo-title">先看软件输出</h2>
+    <p>本次修复的核心：CSV/TSV 的表头、单元格属于数据，应保留方括号原文；显式 <code>--print</code> 的格式渲染行为继续保留。</p>
+    <div id="scenario-tabs" class="tabs" role="tablist" aria-label="演示场景"></div>
+    <article class="input-card"><div class="section-line"><h3 id="case-title">正在读取真实运行记录…</h3><span id="captured-at"></span></div><p id="case-purpose"></p><div class="label">本次输入</div><pre id="input"></pre><div class="label">命令</div><pre id="command"></pre></article>
+    <div class="comparison" id="outputs">
+      <article class="terminal-panel"><div class="terminal-top"><h3>修复前 · GitHub 原版</h3><span id="before-badge" class="badge"></span></div><p id="before-exit" class="exit"></p><pre id="before-output" class="terminal"></pre><div id="before-links" class="links"></div></article>
+      <article class="terminal-panel after"><div class="terminal-top"><h3>修复后 · 已安装工程</h3><span id="after-badge" class="badge"></span></div><p id="after-exit" class="exit"></p><pre id="after-output" class="terminal"></pre><div id="after-links" class="links"></div></article>
+    </div>
+    <details class="export-view"><summary>查看修复版真实 SVG 导出效果</summary><img id="svg-output" alt="当前场景由 rich-cli 实际导出的 SVG"><p>图片来自实际 rich-cli 命令导出，未手工重画。</p></details>
+    <p id="demo-evidence" class="note"></p>
+  </section>
+  <section aria-labelledby="tests-title"><p class="eyebrow">02 / 这次到底测了什么</p><h2 id="tests-title">用输入和预期说明测试</h2><p>下面是成功实验中模型生成的 15 个 pytest case，保留参数化用例的独立身份。独立验收与回归另行执行，不混充上游测试。</p><div class="table-wrap"><table><thead><tr><th>测试</th><th>输入 / 操作</th><th>预期</th></tr></thead><tbody id="test-cases"></tbody></table></div><div id="coverage-groups" class="purpose-grid"></div></section>
+  <section aria-labelledby="llm-title"><p class="eyebrow">03 / LLM 与执行器的工作</p><h2 id="llm-title">模型提出代码，运行结果由程序验证</h2><ol id="llm-stages" class="stages"></ol><div class="score-panel"><h3>成功的完整自动运行</h3><div id="score-summary"></div><p id="model-note" class="note"></p><a id="report-link" href="#">下载原始验收报告</a></div><h3>本次范围</h3><ul id="scope-limits"></ul></section>
+  <footer><a href="/">返回 TestFix 工作台</a><span id="source-note"></span></footer>
+</main><p id="error" role="alert" hidden></p>
+</body></html>

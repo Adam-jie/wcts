@@ -13,7 +13,7 @@
 
 ## 实际采用的原框架
 
-原依赖为用户提供的 WCTP，默认位置 `../自动化框架/wctp`，也可通过 `TESTFIX_WCTP_ROOT` 指定。七个执行核心文件逐字节与原始 `wctp.zip` 的 SHA-256 一致，证据见 `artifacts/wctp-product-check/wctp-source-binding.json`。没有复制或替换其算法。
+原依赖为用户提供的 WCTP。v0.2.1 经团队授权，将七个执行核心文件纳入 `testfix/_vendor/wctp`，默认直接加载；也可通过 `TESTFIX_WCTP_ROOT` 指定同版本源码。文件逐字节与原始 `wctp.zip` 的 SHA-256 一致，固定哈希见其中的 `SOURCE.json`，历史绑定证据见 `artifacts/wctp-product-check/wctp-source-binding.json`。
 
 软件测试真正调用原 WCTP 的 `parse_graph`、`validate_graph`、`StepRegistry`、原生 `Step.execute`、`LoopStep`、`ExecutionContext`、`GraphExecutor.execute`。仍使用已有私有导入命名空间适配；仅省略类型注解依赖的设备环境导入。原设备驱动和 PyQt 界面没有整体复制到 TestFix；这里是在桌面工作台中显示同一执行图及其真实回执。
 

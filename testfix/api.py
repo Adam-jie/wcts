@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import asyncio
 import hashlib
 import json
 import mimetypes
@@ -13,7 +14,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, HTTPException, Request, Query
-from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
@@ -125,6 +126,7 @@ class RunStore:
         self.settings = settings
         self.lock = threading.RLock()
         self.runs = {}
+        self.listeners = {}
         # Ownership belongs to this executor, even when another app uses our PID.
         self._owned_run_ids: set[str] = set()
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="testfix-supervisor")
@@ -165,6 +167,27 @@ class RunStore:
                 raise HTTPException(404, "Run not found")
             return copy.deepcopy(self.runs[run_id])
 
+    def subscribe(self, run_id, loop):
+        with self.lock:
+            snapshot = self.snapshot(run_id)
+            queue = asyncio.Queue()
+            self.listeners.setdefault(run_id, []).append((loop, queue))
+            return snapshot, queue
+
+    def unsubscribe(self, run_id, queue):
+        with self.lock:
+            listeners = self.listeners.get(run_id, [])
+            self.listeners[run_id] = [item for item in listeners if item[1] is not queue]
+            if not self.listeners[run_id]:
+                self.listeners.pop(run_id, None)
+
+    def publish(self, value):
+        with self.lock:
+            snapshot = copy.deepcopy(value)
+            self.runs[value['id']] = snapshot
+            for loop, queue in self.listeners.get(value['id'], []):
+                loop.call_soon_threadsafe(queue.put_nowait, snapshot)
+
     def submit(self, request: RunRequest):
         with self.lock:
             self.refresh_external_runs()
@@ -178,8 +201,7 @@ class RunStore:
             self._owned_run_ids.add(run["id"])
 
         def persist(value):
-            with self.lock:
-                self.runs[value["id"]] = copy.deepcopy(value)
+            self.publish(value)
 
         self.pool.submit(execute_run, run, self.settings, persist)
         return {"id": run["id"], "status": "queued"}
@@ -198,8 +220,7 @@ class RunStore:
             save_run(self.settings.artifacts/run["id"],run)
             self._owned_run_ids.add(run["id"])
         def persist(value):
-            with self.lock:
-                self.runs[value["id"]] = copy.deepcopy(value)
+            self.publish(value)
         self.pool.submit(execute_project_run,run,self.settings,persist)
         return {"id":run["id"],"status":"queued"}
 
@@ -235,6 +256,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(create_web_live_router(settings.root))
     from .intake import create_intake_router
     app.include_router(create_intake_router(settings))
+    from .test_library import create_test_library_router
+    app.include_router(create_test_library_router(settings))
 
     @app.middleware("http")
     async def local_origin_guard(request: Request, call_next):
@@ -524,6 +547,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/runs/{run_id}")
     def run_detail(run_id: str):
         return store.snapshot(run_id)
+
+    @app.get('/api/runs/{run_id}/stream')
+    async def run_stream(run_id: str):
+        snapshot, queue = store.subscribe(run_id, asyncio.get_running_loop())
+
+        async def events():
+            current = snapshot
+            try:
+                while True:
+                    yield 'data: ' + json.dumps(current, ensure_ascii=False, separators=(',', ':')) + '\n\n'
+                    if current['status'] not in {'queued', 'running'}:
+                        break
+                    while True:
+                        try:
+                            current = await asyncio.wait_for(queue.get(), timeout=1.6)
+                            break
+                        except asyncio.TimeoutError:
+                            if run_id not in store._owned_run_ids:
+                                latest = store.snapshot(run_id)
+                                if latest != current:
+                                    current = latest
+                                    break
+                            yield ': keepalive\n\n'
+            finally:
+                store.unsubscribe(run_id, queue)
+
+        return StreamingResponse(events(), media_type='text/event-stream', headers={'X-Accel-Buffering': 'no'})
 
     @app.get("/api/runs/{run_id}/report")
     def report(run_id: str, format: str = "json"):

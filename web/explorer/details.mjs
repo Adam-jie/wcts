@@ -1,12 +1,12 @@
 // Drill-down descriptions grounded in the repository, never synthetic run results.
 export const generationStages=[
   {reuse:'analysis'},
-  {id:'team-dispatch',name:'任务拆解与 Skill 分配',short:'任务图 · 专业匹配 · 文件归属',icon:'graph',skills:['plan-workflow'],
+  {id:'team-dispatch',name:'任务拆解与分配',short:'任务图 · 专业匹配 · 文件归属',icon:'graph',skills:['plan-workflow'],
     description:'接收主控的任务图，核对依赖、专业 Skill、允许修改范围和资源槽位，为员工协作准备输入。',duties:['前置任务成功后才派发就绪任务。','不适用专业不激活；缺少适配器的任务明确阻塞。'],files:['testfix/team_planning.py','testfix/team_runtime.py','testfix/specialists.py']},
   {id:'specialist-team',name:'专业 Agent 协作实现',short:'前端 · 后端 · 软件 · 嵌入式',icon:'code',
     description:'按任务激活专业员工，在 Skill 和文件归属范围内读取、搜索、修改及交接。十种专业不表示十个模型常驻，模型请求可并发，宿主文件提交受冲突检查。',duties:['展开四个专业组，进一步查看十种 Agent 的职责与 Skill。','在 MCTS 模式下，本模块由每次候选扩展重新调用；线性模式直接调用员工协作。'],files:['testfix/team_runtime.py','testfix/specialists.py','testfix/specialist_library/catalog.json']},
-  {id:'candidate-search',name:'MCTS / UCT 候选空间树',short:'选择 → 扩展 → 评估 → 回传',icon:'orbit',ordered:true,
-    description:'把工程版本、补丁与公开失败反馈作为搜索状态。主控决定是否启用单树或多树搜索；每次扩展复制候选、重新规划员工并执行真实公开测试，再更新树统计。这里的空间是候选代码空间。',
+  {id:'candidate-search',name:'补全方案探索与优化',short:'选择 → 扩展 → 评估 → 回传',icon:'orbit',ordered:true,
+    description:'采用 MCTS / UCT 候选空间树，把工程版本、补丁与公开失败反馈作为搜索状态。主控决定是否启用单树或多树搜索；每次扩展复制候选、重新规划员工并执行真实公开测试，再更新树统计。这里的空间是候选代码空间。',
     duties:['逐步查看状态建模、UCT 选择、候选扩展、公开评估、反向回传与候选选择。','每轮只激活一个选中分支，分支内的员工模型可以重叠执行。','独立验收、参考答案与最终验收成绩不进入搜索奖励或模型上下文。'],
     parameters:[['代码算法','search_forest：UCT 单树 / 多树'],['默认配置','3 树、6 次扩展、宽度 2、深度 3；以运行配置为准'],['探索常数','sqrt(2)，由 SearchConfig 配置'],['奖励来源','冻结的公开生成测试 + 原有回归'],['验收隔离','independent_acceptance_used = false']],
     files:['testfix/repair_search.py','testfix/search_workflow.py'],links:[{id:'search',label:'查看主控中的搜索配置职责'}]},

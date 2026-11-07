@@ -22,3 +22,11 @@ result. A capture stores one response field for later steps. A RESTART step
 stops and restarts the same application against the same database. All other
 steps use actual local HTTP requests. Describe these operations as planned;
 they have not yet run.
+
+The equals operator compares the complete value and its JSON type. The
+contains operator uses exact list membership, string substring membership,
+or object-key membership. It does not match a subset of an object. For a
+TaskBoard item in a list, either assert individual paths such as items.0.title
+and items.0.id, or provide the complete id/title/completed object for contains.
+Use captured variables for generated IDs. Keep assertions aligned with these
+observable response fields.

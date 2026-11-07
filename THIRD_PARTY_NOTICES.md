@@ -13,7 +13,7 @@ The Flaskr candidate is an experimental derivative, not an unmodified upstream r
 
 ## Separately obtained source and data
 
-WCTP is an external, source-pinned dependency for dynamic manager/employee collaboration only. Its original source and private device/GUI stack are **not bundled**. No upstream redistribution license was established from the supplied materials. Obtain permission independently before supplying it via `TESTFIX_WCTP_ROOT`; the TestFix MIT license does not cover it. The new `testfix/wctp_runtime.py` and `wctp_bridge.py` adapters are TestFix contributions. Missing or changed WCTP source produces a clear failure and never a substitute implementation.
+The seven WCTP core files under `testfix/_vendor/wctp/` are supplied by the project team, which confirmed authorization to publish this subset on 2026-11-07. `SOURCE.json` records the pinned SHA-256 values. The adapter loads the original graph executor, parser, registry and context directly, checks their hashes and relocates imports to a private namespace. The source-provider's original internal-use Markdown documentation is omitted. The TestFix MIT license covers the adapters and original TestFix contributions and does not replace third-party rights in the WCTP dependency.
 
 HumanEval data are not bundled. The downloader obtains [openai/human-eval](https://github.com/openai/human-eval/tree/6d43fb980f9fee3c892a914eda09951f772ad10d), commit `6d43fb980f9fee3c892a914eda09951f772ad10d`, and preserves its MIT license with the downloaded data. Historical session capture JSON files are omitted from this public release.
 
@@ -31,6 +31,8 @@ Python dependency source distributions, wheels, model credentials and SDK source
 
 The hardware workbench bundle includes third-party frontend dependencies; their license texts are retained in `web/hardware-app/THIRD_PARTY_NOTICES.txt`.
 
-The upstream FEA-Bench source and its datasets are not bundled. Where needed, obtain [microsoft/FEA-Bench](https://github.com/microsoft/FEA-Bench) separately and retain its license; the TestFix integration is distinct from the upstream evaluator.
+The six office character GLB files in `web/implementation/vendor/models/` are from Gobkit Free Character Pack Vol.2 (`gobkit-human002-pack`), published under CC0 1.0. The complete CC0 text and source description are retained in that directory. `palette.png` is extracted from the unchanged models by the provided script. The accompanying GLTFLoader, BufferGeometryUtils and SkeletonUtils modules are Three.js r170 under MIT; their local import paths are adjusted, and the MIT license is retained in `web/implementation/vendor/THREE-LICENSE.txt`.
+
+The pinned upstream [microsoft/FEA-Bench](https://github.com/microsoft/FEA-Bench) source snapshot and Lite task-ID list are retained under `third_party/FEA-Bench/` with Microsoft's original MIT `LICENSE`. Snapshot provenance is recorded in `third_party/SOURCE.json`. Its source is unmodified. Rebuilt task datasets, Docker images and local evaluator results are obtained separately. The TestFix integration is distinct from the upstream evaluator.
 
 SWE-bench Lite and BugsInPy raw datasets are not bundled. `scripts/collect_benchmarks.py` downloads separately pinned metadata and retains evaluator-only source evidence locally. SWE-bench declares MIT for its harness; original project licenses remain effective. The pinned BugsInPy archive has no identified LICENSE, so its metadata is not redistributed by this source release. Collection and environment limitations are recorded in `docs/benchmark-datasets.md`.

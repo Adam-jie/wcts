@@ -1,10 +1,10 @@
-"""Reference the supplied WCTP graph engine without importing its device stack.
+"""Load the pinned WCTP graph engine without importing its device stack.
 
 The original executor, graph model, registry and execution context are loaded
-from verified local files. Only absolute ``src`` imports are relocated to a
+from verified source files. Only absolute ``src`` imports are relocated to a
 private namespace; the context's annotation-only EnvBlueprint import is omitted
-with postponed annotations. No source is copied into this package and no
-``src`` package or search-path entry is installed globally.
+with postponed annotations. No ``src`` package or search-path entry is installed
+globally. An explicit source root can override the bundled core.
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ SOURCE_SHA256 = {
 }
 _IMPORT_LOCK = RLock()
 _SAFE_ID = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{0,127}$")
-_DEFAULT_ROOT = Path(__file__).resolve().parents[2] / "自动化框架" / "wctp"
+_DEFAULT_ROOT = Path(__file__).resolve().parent / "_vendor" / "wctp"
 
 
 class WCTPSourceError(RuntimeError):

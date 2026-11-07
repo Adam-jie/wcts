@@ -1,0 +1,11 @@
+*
+!pyproject.toml
+!README.md
+!testfix/
+!testfix/**
+!agentarts/
+!agentarts/entry.py
+!agentarts/requirements.txt
+!agentarts/Dockerfile
+**/__pycache__/
+**/*.pyc

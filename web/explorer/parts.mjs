@@ -34,11 +34,11 @@ const childSpecs = {
       description:'把用户目标与工程现状整理为任务、依赖、修改范围和可验证的交付条件。',duties:['理解目标功能并核对现有工程。','生成包含依赖与输出契约的员工任务图。'],files:['testfix/project_workflow.py','testfix/team_planning.py']},
     {id:'routing',name:'专业 Agent 分配',short:'按需激活 · 缺适配阻塞',icon:'graph',
       description:'结合任务与源码证据选择专业员工；不相关的专业记录为不适用，缺少执行能力时明确标记阻塞。',duties:['识别软件、网页、数据库与嵌入式任务信号。','核对执行适配器，避免把未执行任务标成完成。'],files:['testfix/specialists.py','testfix/team_runtime.py','testfix/specialist_library/catalog.json']},
-    {id:'scheduler',name:'ILP 约束与就绪排序',short:'依赖 · 出度 · 资源预算',icon:'graph',
+    {id:'scheduler',name:'任务调度与优先级',short:'依赖 · 出度 · 资源预算',icon:'graph',
       description:'用 OR-Tools CP-SAT 处理依赖和预算等硬约束，就绪任务按出度、关键路径与后继数量排序。',duties:['核对时间、Token、模型槽位和 CPU 槽位。','在满足依赖的任务中按优先级派工。'],files:['testfix/scheduling.py','testfix/team_planning.py']},
-    {id:'search',name:'UCT 单树 / 多树搜索',short:'候选探索 · 公开反馈',icon:'orbit',
-      description:'在隔离候选中探索不同补全路径，用公开检查反馈选择候选，最终独立验收不参与搜索奖励。',duties:['组织单树或多树候选的探索与评估。','记录候选来源、公开检查与最终选择。'],files:['testfix/repair_search.py','testfix/search_workflow.py']},
-    {id:'gateway',name:'LLM 与 AgentArts 接入',short:'模型调用 · Skill 契约',icon:'orbit',
+    {id:'search',name:'补全方案探索与选择',short:'候选探索 · 公开反馈',icon:'orbit',
+      description:'采用 UCT 单树或多树搜索，在隔离候选中探索不同补全路径，用公开检查反馈选择候选，最终独立验收不参与搜索奖励。',duties:['组织单树或多树候选的探索与评估。','记录候选来源、公开检查与最终选择。'],files:['testfix/repair_search.py','testfix/search_workflow.py']},
+    {id:'gateway',name:'模型与平台接入',short:'模型调用 · Skill 契约',icon:'orbit',
       description:'向配置的模型服务发送受 Skill 约束的公开上下文，校验契约与版本，记录实际调用。',duties:['加载固定 Skill 契约和模型传输适配。','记录模型返回的用量、型号与调用错误。'],files:['testfix/project_models.py','testfix/agentarts_runtime.py']},
     {id:'feedback',name:'汇总、预算与二次分配',short:'回执 → 再规划 → 交付',icon:'layers',skills:['plan-workflow'],
       description:'汇总各员工产物、公开失败和剩余预算，决定继续补全、重新分配或停止并交付证据。',duties:['绑定当前候选和员工回执，保留返工原因。','把公开失败反馈转为下一轮任务；最终验收内容保持隔离。'],files:['testfix/project_workflow.py','testfix/team_runtime.py']},
@@ -60,7 +60,7 @@ const childSpecs = {
   tests:[
     {id:'test-design',name:'测试步骤与用例生成',short:'输入 · 步骤 · 断言',icon:'test',skills:['generate-tests'],
       description:'由模型根据公开需求与源码生成可执行步骤、数据和断言，审核测试是否有效，再冻结用例用于前后对照。',duties:['覆盖正常、边界和异常输入，明确每步预期行为。','审核断言并冻结测试，避免随补丁放宽标准。'],files:['testfix/skill_library/generate-tests/SKILL.md','testfix/test_quality.py','testfix/test_quality_worker.py']},
-    {id:'executor',name:'WCTP 连线与执行工具',short:'图节点 · 进程 · 执行回执',icon:'graph',
+    {id:'executor',name:'测试流程执行',short:'图节点 · 进程 · 执行回执',icon:'graph',
       description:'复用校验后的 WCTP 图源码，连接任务节点与受控执行工具，运行测试进程并返回日志与退出码；图执行也被员工协作复用。',duties:['校验 WCTP 源文件哈希及节点契约。','在工程候选和允许的工具内执行，保留真实回执。'],files:['testfix/wctp_bridge.py','testfix/wctp_runtime.py','testfix/project_tools.py']},
     {id:'campaign',name:'循环与多数据测试',short:'多轮 · 多输入 · 固定计划',icon:'layers',
       description:'冻结输入与判定规则，按计划对同一产品重复、多数据运行，分别记录通过、失败、超时和未执行项。',duties:['保留每轮、每条数据和源码版本的对应关系。','预算耗尽或执行失败时明确记录未完成范围。'],files:['testfix/product_campaign.py','testfix/product_http.py']},
@@ -106,7 +106,7 @@ export const treePartIds=(selected,expandedRoot)=>visiblePartIds(selected,expand
 export function matchingPartIds(query){
   const text=String(query).trim().toLocaleLowerCase();
   if(!text)return new Set(parts.map(part=>part.id));
-  const matches=part=>[part.id,part.name,part.english,part.short,...part.skills].join(' ').toLocaleLowerCase().includes(text);
+  const matches=part=>[part.id,part.name,part.english,part.short,part.description,...part.skills].join(' ').toLocaleLowerCase().includes(text);
   const ids=new Set();
   for(const part of parts){
     if(!matches(part))continue;

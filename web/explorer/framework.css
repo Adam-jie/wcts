@@ -1,4 +1,6 @@
 /* The reference's quiet navy / frosted metal palette stays in explorer.css. */
+.topbar .brand-english,.demo-tag,.sidebar-bottom,.interaction-hint>span{display:none}
+.interaction-hint{padding:8px 15px}
 .model-views{display:inline-flex;gap:3px;padding:3px;margin-top:17px;background:#09111bde;border:1px solid #8fb9cc19;border-radius:6px;pointer-events:auto}
 .model-views button{font-size:10px;padding:6px 14px;background:transparent;color:#8294ab;border:1px solid transparent;border-radius:4px}
 .model-views button[aria-pressed="true"]{color:#c5eeee;background:#92d8d415;border-color:#8bdcda2b}

@@ -1,0 +1,5 @@
+{
+  "project": "TestFix",
+  "checks": 21,
+  "passed": true
+}

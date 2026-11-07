@@ -33,7 +33,9 @@ class ApplicationPreviews:
         with self.lock:
             run, project, candidate = self.accepted(identifier)
             existing = self.processes.get(identifier)
-            if existing and existing['process'].poll() is None: return {'url': existing['url'], 'running': True}
+            if existing and existing['process'].poll() is None:
+                return {'url': existing['url'], 'running': True,
+                        'candidate_sha256': run['tasks'][0]['candidate_sha256']}
             port = None
             for value in (8774, 8773, 8772, 8771, 8770):
                 try:

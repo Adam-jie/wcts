@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "testfix-agent"
-version = "0.2.0"
+version = "0.2.1"
 description = "Evidence-driven multi-agent feature completion and independent verification"
 requires-python = ">=3.11"
 dependencies = [
@@ -28,7 +28,7 @@ include = ["testfix*"]
 namespaces = false
 
 [tool.setuptools.package-data]
-testfix = ["skill_library/catalog.json", "skill_library/*/SKILL.md", "skill_library/*/references/*.json", "hardware_skills/*/SKILL.md", "specialist_library/catalog.json", "specialist_library/*/SKILL.md", "feature_skills/*/SKILL.md"]
+testfix = ["skill_library/catalog.json", "skill_library/*/SKILL.md", "skill_library/*/references/*.json", "hardware_skills/*/SKILL.md", "specialist_library/catalog.json", "specialist_library/*/SKILL.md", "feature_skills/*/SKILL.md", "application_contracts/taskboard/*.py", "_vendor/wctp/SOURCE.json", "_vendor/wctp/src/*/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

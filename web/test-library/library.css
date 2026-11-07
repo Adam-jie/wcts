@@ -1,0 +1,11 @@
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tags span{font-size:11px;line-height:1.6;background:#2b415a;color:#adc9e0;border:1px solid #415c78;border-radius:5px;padding:3px 7px}
+.entry>.tags{margin-top:13px}
+.detail-header .tags{margin-top:10px}
+.detail-header .tags>.tags{margin:0}
+.detail .source{font-size:13px;overflow-wrap:anywhere;margin-top:13px}
+.detail .extra-details{margin-top:5px}
+.detail #message{margin:0;padding:11px 25px;background:#25463e;color:#b9e2d0;font-size:13px;line-height:1.8;flex-shrink:0}
+.detail #message:empty{display:none}
+#entries>p{padding:17px;color:#a6bdd4;font-size:14px;line-height:1.9}
+@media(max-width:650px){.detail-footer .actions{width:100%;justify-content:flex-end}.detail-footer #run{margin-right:auto}.tags span{font-size:10px}}

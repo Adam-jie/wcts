@@ -1,7 +1,7 @@
 {
   "name": "wudun-desktop",
   "productName": "无遁 TestFix",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "无遁多智能体工程工作台 Windows 客户端",
   "author": "TestFix Team",
   "private": true,
