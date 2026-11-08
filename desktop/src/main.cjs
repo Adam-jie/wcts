@@ -117,21 +117,50 @@ app.on('second-instance',showWindow);app.on('activate',showWindow);
 app.on('before-quit',event=>{if(!allowClose){event.preventDefault();void closeApp();}});
 process.on('uncaughtException',error=>{log(error.stack||error.message);showError(error);});
 process.on('unhandledRejection',error=>showError(error instanceof Error?error:new Error(String(error))));
-let verifying=false,verificationPhase=0,firstSession=null,navigationExitSession=null;
+let verifying=false,verificationPhase=0,firstSession=null,navigationExitSession=null,verificationStage='waiting_for_model_ready',verificationSettled=false,verificationExiting=false,verificationWatchdog=null;
+function verificationReceiptPath(){return path.join(workspace||userData,'artifacts','desktop','launch-check.json');}
+function writeVerificationFailure(error,stage){
+  const record={status:'failed',reason:'verification_failed',stage,error:error instanceof Error?error.message:String(error),error_name:error instanceof Error?error.name:'Error',packaged:app.isPackaged,electron:process.versions.electron,workspace:workspace||null,engine_pid:backend?.serverPid??null,engine_origin:backend?.origin??null,renderer_url:(()=>{try{return view&&!view.webContents.isDestroyed()?view.webContents.getURL():null;}catch{return null;}})(),diagnostics};
+  try{fs.mkdirSync(path.dirname(verificationReceiptPath()),{recursive:true});fs.writeFileSync(verificationReceiptPath(),JSON.stringify(record,null,2));}catch(writeError){try{log('verification receipt write failed: '+(writeError instanceof Error?writeError.message:String(writeError)));}catch{}}
+}
+async function endVerification(code){
+  if(verificationExiting)return false;verificationExiting=true;
+  try{if(backend&&!backend.exited)await backend.stop();}catch(stopError){try{log('verification stop deferred: '+(stopError instanceof Error?stopError.message:String(stopError)));}catch{}}
+  allowClose=true;app.exit(code);return true;
+}
+function failVerification(error,stage){
+  if(verificationSettled)return;verificationSettled=true;verifying=true;
+  if(verificationWatchdog){clearTimeout(verificationWatchdog);verificationWatchdog=null;}
+  try{log('verification failed ['+stage+']: '+(error instanceof Error?error.stack||error.message:String(error)));}catch{}
+  writeVerificationFailure(error,stage);
+  try{showError(error instanceof Error?error:new Error(String(error)));}catch{}
+  void endVerification(1);
+}
 async function verifyStartup(){
   if(verifying||!backend?.origin||backend.session===navigationExitSession)return;verifying=true;
   try{
+    verificationStage='wait_for_renderer';
     await new Promise(resolve=>setTimeout(resolve,1300));
+    if(verificationSettled)return;
+    verificationStage='prepare_artifacts';
     const folder=path.join(workspace,'artifacts','desktop');fs.mkdirSync(folder,{recursive:true});
-    const picture=await view.webContents.capturePage();fs.writeFileSync(path.join(folder,'desktop-model.png'),picture.toPNG());
-    if(verificationPhase===0){firstSession=backend.session;verificationPhase=1;verifying=false;log('verification: end owned engine input to exercise automatic recovery');backend.child.stdin.end();return;}
+    verificationStage='capture_page';const picture=await view.webContents.capturePage();
+    if(verificationSettled)return;
+    verificationStage='write_screenshot';fs.writeFileSync(path.join(folder,'desktop-model.png'),picture.toPNG());
+    if(verificationPhase===0){firstSession=backend.session;verificationPhase=1;verifying=false;verificationStage='end_engine_input';log('verification: end owned engine input to exercise automatic recovery');backend.child.stdin.end();verificationStage='await_engine_recovery';return;}
+    verificationStage='check_recovery_session';
     if(backend.session===firstSession)throw new Error('恢复后仍使用旧引擎会话。');
+    verificationStage='check_navigation_exit_session';
     if(!navigationExitSession||backend.session===navigationExitSession)throw new Error('导航期间退出后未恢复到新会话。');
+    verificationStage='check_window';
     if(!win.isVisible()||win.isMinimized())throw new Error('实际桌面窗口不可见，不能判定启动成功。');
+    verificationStage='write_receipt';
     const receipt={status:'passed',packaged:app.isPackaged,electron:process.versions.electron,window_visible:win.isVisible(),engine_pid:backend.serverPid,engine_origin:backend.origin,renderer_url:view.webContents.getURL(),webgl_model_initialized:true,automatic_engine_recovery:true,navigation_exit_recovered:true,old_session:firstSession,navigation_exit_session:navigationExitSession,new_session:backend.session,diagnostics,workspace,screenshot:'desktop-model.png'};
     fs.writeFileSync(path.join(folder,'launch-check.json'),JSON.stringify(receipt,null,2));
+    verificationSettled=true;if(verificationWatchdog){clearTimeout(verificationWatchdog);verificationWatchdog=null;}
+    verificationStage='close_app';
     await closeApp();
-  }catch(error){verifying=false;log('verification failed: '+error.message);showError(error);}
+  }catch(error){failVerification(error,verificationStage);}
 }
 app.whenReady().then(async()=>{
   Menu.setApplicationMenu(null);
@@ -150,7 +179,7 @@ app.whenReady().then(async()=>{
   view.webContents.on('render-process-gone',(_event,details)=>{showError(new Error('界面进程已退出：'+details.reason+'。可点击重新连接恢复。'));});
   const image=nativeImage.createFromPath(iconPath);if(!image.isEmpty()){tray=new Tray(image.resize({width:24,height:24}));tray.setToolTip('无遁 TestFix');tray.on('double-click',showWindow);tray.setContextMenu(Menu.buildFromTemplate([{label:'打开无遁',click:showWindow},{label:'退出软件',click:()=>void closeApp()}]));}
   await win.loadFile(shellPath);win.show();
-  if(verify)setTimeout(async()=>{if(verifying)return;log('verification: model readiness timeout');const folder=path.join(workspace||userData,'artifacts','desktop');fs.mkdirSync(folder,{recursive:true});fs.writeFileSync(path.join(folder,'launch-check.json'),JSON.stringify({status:'failed',reason:'model_readiness_timeout',diagnostics},null,2));if(backend)await backend.stop();allowClose=true;app.exit(1);},70000).unref();
+  if(verify){verificationWatchdog=setTimeout(()=>failVerification(new Error('自检在 70 秒内未完成。'),verificationStage),70000);verificationWatchdog.unref();}
   if(workspace)await connect();else showError(new Error('未找到本机工程。请选择包含 testfix、web 和 .venv 的工程文件夹。'));
 }).catch(error=>{log(error.stack||String(error));dialog.showErrorBox('无遁启动失败',String(error));allowClose=true;app.quit();});
 }
