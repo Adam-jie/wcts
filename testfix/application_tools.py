@@ -144,8 +144,9 @@ def run_application_operation(request, guard):
     from .project_tools import files_under
     root = Path(request['root']).resolve(); run = root / 'artifacts' / request['run_id']; work = run / 'workspace'
     paths = {key: _inside(root, Path(request[key])) for key in ('baseline', 'candidate', 'generated', 'acceptance', 'output')}
-    paths['python'] = Path(request['python']).resolve()
-    if paths['python'] != Path(sys.executable).resolve():
+    # Resolving a Linux venv symlink before execution drops its site-packages.
+    paths['python'] = Path(request['python']).absolute()
+    if paths['python'].resolve() != Path(sys.executable).resolve():
         raise ValueError('Application tools must use the host registered interpreter')
     for key, relative in {'baseline': 'baseline', 'candidate': 'candidate', 'generated': 'generated_tests', 'acceptance': 'private/acceptance_tests'}.items():
         if paths[key] != (work / relative).resolve(): raise ValueError('Application tool requires exact run paths')

@@ -25,11 +25,12 @@ def run_step(request, guard):
             raise ValueError('Feature action requires exact owned workspace paths')
     if not paths['output'].is_relative_to(run / 'tool_calls'):
         raise ValueError('Feature result must stay within owned tool calls')
-    python = Path(request['python']).resolve(strict=True)
+    python = Path(request['python']).absolute()
+    resolved_python = python.resolve(strict=True)
     adapter = request.get('adapter', 'flaskr')
-    if adapter == 'python_application' and python != Path(sys.executable).resolve():
+    if adapter == 'python_application' and resolved_python != Path(sys.executable).resolve():
         raise ValueError('Application tests must use the host registered interpreter')
-    if adapter != 'python_application' and not python.is_relative_to(root):
+    if adapter != 'python_application' and not resolved_python.is_relative_to(root):
         raise ValueError('Registered interpreter must stay within workspace')
     candidate, directory = paths['candidate'], paths['output'].parent
     name = request.get('test_file')

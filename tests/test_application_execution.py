@@ -91,6 +91,7 @@ def test_full_application_tool_baseline_and_fixed_fixture(tmp_path_factory):
     workspace.write_tests({'files': [{'path': 'test_search.py', 'source': 'from taskboard.storage import Storage\ndef test_search(tmp_path):\n    store=Storage(tmp_path/"db")\n    assert store.list("不存在的关键词")["total"] == 0\n'}]})
     baseline = run_project_tool(settings, workspace, 'baseline_public', timeout_s=90)
     assert baseline['regression']['successful'] and baseline['regression']['total'] == 6
+    assert Path(baseline['regression']['command'][0]) == Path(sys.executable)
     assert baseline['generated']['runnable'] and baseline['generated']['passed'] == 0
     source = (workspace.candidate / 'taskboard/storage.py').read_text(encoding='utf-8')
     # A deterministic test fixture verifies the new adapter; it is not the real model experiment.
